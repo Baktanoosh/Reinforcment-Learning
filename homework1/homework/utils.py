@@ -49,3 +49,4 @@ def accuracy(outputs, labels):
     outputs_idx = outputs.max(1)[1].type_as(labels)
     return outputs_idx.eq(labels).float().mean()
 
+
