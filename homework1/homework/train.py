@@ -1,20 +1,19 @@
 from .models import ClassificationLoss, model_factory, save_model
 from .utils import accuracy, load_data
 import torch
-from data import load
 
 
 def train(args):
     train_path = "../../../cs342/homework1/data/train"
     valid_path = "../../../cs342/homework1/data/valid"
     model = model_factory[args.model]()
-    num_epochs = int(args.epochs)
-    batch_size = int(args.batch_size)
-    learning_rate = float(args.learning_rate)
+    num_epochs = 100
+    batch_size = 64
+    learning_rate = 0.001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
-    to_image = load.to_image_transform()
+ 
     train_data = load_data(train_path)
     valid_data = load_data(valid_path)
     loss = ClassificationLoss()    
