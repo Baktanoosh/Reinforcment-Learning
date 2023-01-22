@@ -19,25 +19,20 @@ class LinearClassifier(torch.nn.Module):
     def forward(self, x):
         flat_linear = self.linear(torch.flatten(x, start_dim=1))      
         return flat_linear
-        
+    
 
 class MLPClassifier(torch.nn.Module):
     def __init__(self):
         super().__init__()
         input = 3 * 64 * 64
         output = 6
-        self.linear1 = torch.nn.Linear(input,output)
-        
+        self.linear = torch.nn.Sequential(torch.nn.Linear(input, 300), torch.nn.ReLU(), torch.nn.Linear(300, output), torch.nn.ReLU())
+
     
 
     def forward(self, x):
-        """
-        Your code here
-
-        @x: torch.Tensor((B,3,64,64))
-        @return: torch.Tensor((B,6))
-        """
-        raise NotImplementedError('MLPClassifier.forward')
+        flat_linear = self.linear(torch.flatten(x, start_dim=1))      
+        return flat_linear
 
 
 model_factory = {
