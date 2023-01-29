@@ -2,7 +2,7 @@ import torch
 
 
 class CNNClassifier(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, layers=[64,128,256], n_input_channels=3, kernel_size=3):
         super().__init__()
 
         L = [] # a list to contain all layers for the network
