@@ -27,14 +27,12 @@ def test_logging(train_logger, valid_logger):
             train_logger.add_scalar("loss", dummy_train_loss, global_step=global_step)
             train_accuracy.append(dummy_train_accuracy.numpy())
             global_step += 1
-        #raise NotImplementedError('Log the training accuracy')
         train_logger.add_scalar("accuracy", np.mean(train_accuracy), global_step=global_step)
         torch.manual_seed(epoch)
         validation_accuracy = []
         for iteration in range(10):
             dummy_validation_accuracy = epoch / 10. + torch.randn(10)
             validation_accuracy.append(dummy_validation_accuracy.numpy())
-        #raise NotImplementedError('Log the validation accuracy')
         valid_logger.add_scalar("accuracy", np.mean(validation_accuracy), global_step=global_step)
 
 
