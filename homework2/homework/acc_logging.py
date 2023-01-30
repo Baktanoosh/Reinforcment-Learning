@@ -1,7 +1,7 @@
 from os import path
 import torch
 import torch.utils.tensorboard as tb
-
+import numpy as np
 
 def test_logging(train_logger, valid_logger):
 
