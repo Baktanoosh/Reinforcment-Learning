@@ -14,8 +14,6 @@ def test_logging(train_logger, valid_logger):
     """
 
     # This is a strongly simplified training loop
-
-    # This is a strongly simplified 
     global_step = 0
     for epoch in range(10):
         torch.manual_seed(epoch)
