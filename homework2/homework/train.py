@@ -10,9 +10,9 @@ def train(args):
     train_path = "/content/cs342/homework2/data/train"
     valid_path = "/content/cs342/homework2/data/valid"
     
-    num_epochs = 100
+    num_epochs = 10000
     batch_size = 64
-    learning_rate = 0.001
+    learning_rate = 0.0007
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model = CNNClassifier()
@@ -20,7 +20,8 @@ def train(args):
     train_data = load_data(train_path)
     valid_data = load_data(valid_path)
     loss = torch.nn.CrossEntropyLoss()   
-    
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
     global_step = 0
     for epoch in range(num_epochs):
         train_accuracy = []
@@ -30,7 +31,6 @@ def train(args):
         valid_accuracy = []
         valid_accuracy_value = []
 
-        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate , momentum=0.9, weight_decay=1e-4)
         for i, (data, labels) in enumerate(train_data):
             o = model(data.to(device))
             train_loss = loss(o, labels.to(device))
