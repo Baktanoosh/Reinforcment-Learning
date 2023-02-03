@@ -10,8 +10,7 @@ def train(args):
     train_path = "/content/cs342/homework2/data/train"
     valid_path = "/content/cs342/homework2/data/valid"
     
-    num_epochs = 10000
-    batch_size = 64
+    num_epochs = 100
     learning_rate = 0.0007
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
@@ -21,7 +20,6 @@ def train(args):
     valid_data = load_data(valid_path)
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
     global_step = 0
     for epoch in range(num_epochs):
         train_accuracy = []
@@ -41,9 +39,10 @@ def train(args):
             train_loss.backward()
             optimizer.step()
             global_step += 1
-
-            print (f'Epoch - {global_step+1}, Loss - {round(train_loss.item(),3)}')
+            
+            print (f'Global Step - {global_step+1}, Loss - {round(train_loss.item(),3)}')
         print("------------------------------------------------------------")
+        print (f'EPOCH', epoch)
         save_model(model)
 
 
