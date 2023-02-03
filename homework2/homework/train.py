@@ -40,10 +40,11 @@ def train(args):
             optimizer.step()
             global_step += 1
             
-            print (f'Global Step - {global_step+1}, Loss - {round(train_loss.item(),3)}')
+            #print (f'Global Step - {global_step+1}, Loss - {round(train_loss.item(),3)}')
         print("------------------------------------------------------------")
-        print (f'EPOCH', epoch)
-        save_model(model)
+        print(f'EPOCH', epoch+2)
+        print('Accuracy: ', sum(train_accuracy_value) / len(train_accuracy_value))
+    save_model(model)
 
 
 
