@@ -10,7 +10,7 @@ def train(args):
     train_path = "/content/cs342/homework2/data/train"
     valid_path = "/content/cs342/homework2/data/valid"
     
-    num_epochs = 10000
+    num_epochs = 100
     learning_rate = 0.0001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
