@@ -16,8 +16,14 @@ def train(args):
     """
     Your code here, modify your HW1 / HW2 code
     """
-    train_path = "/content/cs342/homework2/data/train"
-    valid_path = "/content/cs342/homework2/data/valid"
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model = CNNClassifier().to(device)
+
+    optimizer = torch.optim.AdamW(model.parameters(), lr=.0001)
+    loss = torch.nn.CrossEntropyLoss()
+
+    train_data = load_data('data/train')
+    valid_data = load_data('data/valid')
     
     num_epochs = 100
     learning_rate = 0.0001
