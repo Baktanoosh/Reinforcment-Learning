@@ -54,7 +54,16 @@ def train(args):
             train_loss.backward()
             optimizer.step()
             global_step += 1
+        model.eval()
+        train_accuracy_value = []
+        for img, label in valid_data:
+            img, label = img.to(device), label.to(device)
+            train_accuracy_value.append(accuracy(model(img), label).detach().cpu().numpy())
+        print("------------------------------------------------------------")
+        print(f'EPOCH', epoch+2)
+        print('Accuracy: ', sum(train_accuracy_value) / len(train_accuracy_value))
     save_model(model)
+
 
 
 if __name__ == '__main__':
