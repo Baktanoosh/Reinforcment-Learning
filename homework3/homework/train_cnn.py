@@ -5,7 +5,7 @@ import torchvision
 import torch.utils.tensorboard as tb
 from PIL import Image
 from os import path
-
+import torchvision.transforms as T
 
 def train(args):
     from os import path
