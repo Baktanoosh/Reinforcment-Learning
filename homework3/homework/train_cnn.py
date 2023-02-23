@@ -3,7 +3,7 @@ from .utils import ConfusionMatrix, load_data, LABEL_NAMES
 import torch
 import torchvision
 import torch.utils.tensorboard as tb
-
+from os import path
 
 def train(args):
     from os import path
