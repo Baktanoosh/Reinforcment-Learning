@@ -2,9 +2,10 @@ from .models import CNNClassifier, save_model
 from .utils import ConfusionMatrix, load_data, LABEL_NAMES
 import torch
 import torchvision
-import torchvision
 import torch.utils.tensorboard as tb
+from PIL import Image
 from os import path
+
 
 def train(args):
     from os import path
@@ -22,9 +23,12 @@ def train(args):
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=.0001)
     loss = torch.nn.CrossEntropyLoss()
-
-    train_data = load_data('data/train')
-    valid_data = load_data('data/valid')
+    
+    train_trans = T.Compose((T.ToPILImage(), T.ColorJitter(0.7, 0.4), T.RandomHorizontalFlip(), T.RandomCrop(32), T.ToTensor()))
+    val_trans = T.Compose((T.ToPILImage(), T.CenterCrop(size=32), T.ToTensor()))
+    train_data = load_data('data/train', transform=train_trans)
+    valid_data = load_data('data/valid', transform=val_trans)
+    loss.to(device)
     
     num_epochs = 100
     learning_rate = 0.0001
@@ -32,8 +36,8 @@ def train(args):
     print('device = ', device)
     model = CNNClassifier()
     model.to(device)
-    train_data = load_data(train_path)
-    valid_data = load_data(valid_path)
+    train_data = load_data(train_data)
+    valid_data = load_data(valid_data)
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     global_step = 0
@@ -77,3 +81,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     train(args)
+
+  
+   
