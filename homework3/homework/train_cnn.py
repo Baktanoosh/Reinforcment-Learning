@@ -2,6 +2,7 @@ from .models import CNNClassifier, save_model
 from .utils import ConfusionMatrix, load_data, LABEL_NAMES
 import torch
 import torchvision
+import torchvision
 import torch.utils.tensorboard as tb
 from os import path
 
