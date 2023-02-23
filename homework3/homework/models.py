@@ -1,25 +1,46 @@
 import torch
 import torch.nn.functional as F
 
-
+class Block(torch.nn.Module):
+        def __init__(self, n_input, n_output, stride=1):
+            super().__init__()
+            self.net = torch.nn.Sequential(
+              torch.nn.Conv2d(n_input, n_output, kernel_size=3, padding=1, stride=stride, bias=False),
+              torch.nn.BatchNorm2d(n_output),
+              torch.nn.ReLU(),
+              torch.nn.Conv2d(n_output, n_output, kernel_size=3, padding=1, bias=False),
+              torch.nn.BatchNorm2d(n_output),
+              torch.nn.ReLU()
+            )
+            self.downsample = None
+            if stride != 1 or n_input != n_output:
+                self.downsample = torch.nn.Sequential(torch.nn.Conv2d(n_input, n_output, 1),
+                                                      torch.nn.BatchNorm2d(n_output))
+        
+        def forward(self, x):
+            identity = x
+            if self.downsample is not None:
+                identity = self.downsample(x)
+            return self.net(x) + identity
+        
+        
 class CNNClassifier(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, layers=[64,128,256,512,1024], n_input_channels=3, kernel_size=3):
         super().__init__()
-        """
-        Your code here
-        Hint: Base this on yours or HW2 master solution if you'd like.
-        Hint: Overall model can be similar to HW2, but you likely need some architecture changes (e.g. ResNets)
-        """
-        raise NotImplementedError('CNNClassifier.__init__')
 
+        L = []  
+        c = n_input_channels  
+        for l in layers:
+            L.append(torch.nn.Conv2d(c, l, kernel_size))
+            L.append(torch.nn.ReLU())
+            L.append(torch.nn.MaxPool2d(3,2,1))
+            c = l
+        L.append(torch.nn.Conv2d(c, 6, kernel_size=1)) 
+        self.network = torch.nn.Sequential(*L)
+        
     def forward(self, x):
-        """
-        Your code here
-        @x: torch.Tensor((B,3,64,64))
-        @return: torch.Tensor((B,6))
-        Hint: Apply input normalization inside the network, to make sure it is applied in the grader
-        """
-        raise NotImplementedError('CNNClassifier.forward')
+        return self.network(x).mean(dim=[2,3])
+
 
 
 class FCN(torch.nn.Module):
