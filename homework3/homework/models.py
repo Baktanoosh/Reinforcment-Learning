@@ -12,9 +12,10 @@ class CNNClassifier(torch.nn.Module):
         """
         self.layers = torch.nn.Sequential(
                   torch.nn.BatchNorm2d(in_put),
-                  torch.nn.Conv2d(in_put, out_put, 3, stride=stride, padding=1, bias=False),
                   torch.nn.ReLU(),
+                  torch.nn.Conv2d(in_put, out_put, 3, stride=stride, padding=1, bias=False),
                   torch.nn.BatchNorm2d(out_put),
+                  torch.nn.ReLU(),
                   torch.nn.Conv2d(out_put, out_put, 3, padding=1)
                 )
         self.identity = torch.nn.Identity()
