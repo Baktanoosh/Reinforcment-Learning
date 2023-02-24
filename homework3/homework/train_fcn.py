@@ -32,7 +32,7 @@ def train(args):
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     global_step = 0    
-    for epoch in range(epochs):
+    for epoch in range(num_epochs):
         model.train()
         confusion_matrix = ConfusionMatrix()
         for image, label in data_train:
