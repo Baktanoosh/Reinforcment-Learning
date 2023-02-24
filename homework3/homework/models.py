@@ -68,7 +68,6 @@ class FCN(torch.nn.Module):
         """
         raise NotImplementedError('FCN.forward')
 
-
 model_factory = {
     'cnn': CNNClassifier,
     'fcn': FCN,
