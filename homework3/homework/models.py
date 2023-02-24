@@ -32,12 +32,13 @@ class CNNClassifier(torch.nn.Module):
         c = n_input_channels  
         for l in layers:
             L.append(torch.nn.Conv2d(c, l, kernel_size))
+            L.append(torch.nn.BatchNorm2d(l))
             L.append(torch.nn.ReLU())
             L.append(torch.nn.MaxPool2d(3,2,1))
             c = l
         L.append(torch.nn.Conv2d(c, 6, kernel_size=1)) 
         self.network = torch.nn.Sequential(*L)
-        
+    
     def forward(self, x):
         return self.network(x).mean(dim=[2,3])
 
@@ -67,6 +68,7 @@ class FCN(torch.nn.Module):
               convolution
         """
         raise NotImplementedError('FCN.forward')
+
 
 model_factory = {
     'cnn': CNNClassifier,
