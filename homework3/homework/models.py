@@ -66,7 +66,7 @@ class FCN(torch.nn.Module):
               convolution
         """
         identity = x
-        z = self.net(x)
+        z = self.network(x)
         z = z[:,:,:x.shape[2],:x.shape[3]]
         if self.downsample is not None:
             identity = self.downsample(x)
