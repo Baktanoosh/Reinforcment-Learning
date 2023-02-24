@@ -4,9 +4,9 @@ import torch
 import torchvision
 import torch.utils.tensorboard as tb
 import numpy as np
+from os import path
 
 def train(args):
-    from os import path
     model = CNNClassifier()
     train_logger, valid_logger = None, None
     if args.log_dir is not None:
@@ -20,7 +20,6 @@ def train(args):
     learning_rate = 0.0001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
-    model = CNNClassifier()
     model.to(device)
     train_data = load_data(train_path)
     valid_data = load_data(valid_path)
