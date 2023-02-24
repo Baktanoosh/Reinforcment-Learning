@@ -1,28 +1,6 @@
 import torch
 import torch.nn.functional as F
 
-class Block(torch.nn.Module):
-        def __init__(self, n_input, n_output, stride=1):
-            super().__init__()
-            self.net = torch.nn.Sequential(
-              torch.nn.Conv2d(n_input, n_output, kernel_size=3, padding=1, stride=stride, bias=False),
-              torch.nn.BatchNorm2d(n_output),
-              torch.nn.ReLU(),
-              torch.nn.Conv2d(n_output, n_output, kernel_size=3, padding=1, bias=False),
-              torch.nn.BatchNorm2d(n_output),
-              torch.nn.ReLU()
-            )
-            self.downsample = None
-            if stride != 1 or n_input != n_output:
-                self.downsample = torch.nn.Sequential(torch.nn.Conv2d(n_input, n_output, 1),
-                                                      torch.nn.BatchNorm2d(n_output))
-        
-        def forward(self, x):
-            identity = x
-            if self.downsample is not None:
-                identity = self.downsample(x)
-            return self.net(x) + identity
-        
         
 class CNNClassifier(torch.nn.Module):
     def __init__(self, layers=[64,128,256,512,1024], n_input_channels=3, kernel_size=3):
@@ -38,7 +16,7 @@ class CNNClassifier(torch.nn.Module):
             c = l
         L.append(torch.nn.Conv2d(c, 6, kernel_size=1)) 
         self.network = torch.nn.Sequential(*L)
-    
+        #transforms = torch.nn.Sequential(transforms.CenterCrop(10), transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),)
     def forward(self, x):
         return self.network(x).mean(dim=[2,3])
 
@@ -55,8 +33,28 @@ class FCN(torch.nn.Module):
         Hint: Use residual connections
         Hint: Always pad by kernel_size / 2, use an odd kernel_size
         """
-        raise NotImplementedError('FCN.__init__')
-
+        layers=[64,128,256,512,1024,512,256,128,64]
+        L = []  
+        c = 32
+        kernel_size = 3
+        stride_coff = 1
+        padding_coff = 1 
+        for l in layers:
+            L.append(torch.nn.Conv2d(c, l, kernel_size, stride_coff, padding_coff))
+            L.append(torch.nn.BatchNorm2d(l))
+            L.append(torch.nn.ReLU())
+            if c > l:
+                L.append(torch.nn.UpsamplingBilinear2d(scale_factor = 2))
+            L.append(torch.nn.MaxPool2d(3,2,1))
+            c = l
+        L.append(torch.nn.Conv2d(c, 6, kernel_size=1)) 
+        self.network = torch.nn.Sequential(*L)
+        self.downsample = None
+            if stride != 1 or n_input != n_output:
+                self.downsample = torch.nn.Sequential(torch.nn.Conv2d(n_input, n_output, 1),
+                                                      torch.nn.BatchNorm2d(n_output))
+        
+        
     def forward(self, x):
         """
         Your code here
@@ -67,8 +65,12 @@ class FCN(torch.nn.Module):
               if required (use z = z[:, :, :H, :W], where H and W are the height and width of a corresponding strided
               convolution
         """
-        raise NotImplementedError('FCN.forward')
-
+        identity = x
+        z = self.net(x)
+        z = z[:,:,:x.shape[2],:x.shape[3]]
+        if self.downsample is not None:
+            identity = self.downsample(x)
+        return z + identity
 
 model_factory = {
     'cnn': CNNClassifier,
