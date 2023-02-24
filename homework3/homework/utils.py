@@ -1,11 +1,11 @@
 import torch
 import torchvision
 import csv
-from os import path
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.transforms import functional as F
+
 from . import dense_transforms
 
 LABEL_NAMES = ['background', 'kart', 'pickup', 'nitro', 'bomb', 'projectile']
@@ -13,23 +13,27 @@ DENSE_LABEL_NAMES = ['background', 'kart', 'track', 'bomb/projectile', 'pickup/n
 # Distribution of classes on dense training set (background and track dominate (96%)
 DENSE_CLASS_DISTRIBUTION = [0.52683655, 0.02929112, 0.4352989, 0.0044619, 0.00411153]
 
-
 class SuperTuxDataset(Dataset):
-    def __init__(self, dataset_path, transform=None):
+    """
+    WARNING: Do not perform data normalization here. 
+    """
+    def __init__(self, dataset_path):
         self.init_tensor = torchvision.transforms.ToTensor()
-        labels_csv_file = dataset_path + '/labels.csv' 
-        label_reader = list(csv.reader(labels_csv_file))
-        label_reader = label_reader[1:] 
-        self.input_data = []
-    
-        for file_name, label, _ in label_reader[1:]:
-            if label in LABEL_NAMES:
-                label_index = LABEL_NAMES.index(label)
+        with open(dataset_path+"/"+"labels.csv") as labels_csv_file:
+            label_reader = csv.reader(labels_csv_file)
+            next(label_reader) 
+            self.input_data = []
+            for row in label_reader:
+                file_name = row[0]
+                label = row[1]
+                j = 0
+                for i in LABEL_NAMES:
+                  if  label == i:
+                    label_index = j
+                    break
+                  j += 1
                 image_tensor = self.init_tensor(Image.open(dataset_path+"/"+file_name))
-                self.input_data.append((image_tensor,label_index))       
-        self.transform = transform
-        
-        
+                self.input_data.append((image_tensor,label_index))
     def __len__(self):
         self.length = len(self.input_data)
         return self.length
@@ -38,8 +42,6 @@ class SuperTuxDataset(Dataset):
     def __getitem__(self, idx):
         self.item = self.input_data[idx]
         return self.item
-
-        
 
 class DenseSuperTuxDataset(Dataset):
     def __init__(self, dataset_path, transform=dense_transforms.ToTensor()):
