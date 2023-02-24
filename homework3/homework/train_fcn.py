@@ -35,15 +35,15 @@ def train(args):
     for epoch in range(num_epochs):
         model.train()
         confusion_matrix = ConfusionMatrix()
-        for image, label in data_train:
+        for image, label in train_data:
             image = image.to(device)
             label = torch.tensor(label, dtype=torch.long, device=device)
             pred = model(image)
             loss_val = loss(pred, label)
-            confu.add(pred.argmax(1), label)
-            optim.zero_grad()
+            confusion_matrix.add(pred.argmax(1), label)
+            optimizer.zero_grad()
             loss_val.backward()
-            optim.step()
+            optimizer.step()
             train_logger.add_scalar('train/loss', float(loss_val), global_step=global_step)
             global_step += 1
         
