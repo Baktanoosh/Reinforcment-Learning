@@ -22,6 +22,48 @@ def train(args):
     Hint: If you found a good data augmentation parameters for the CNN, use them here too. Use dense_transforms
     Hint: Use the log function below to debug and visualize your model
     """
+    num_epochs = 25
+    learning_rate = 0.0001
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    print('device = ', device)
+    model.to(device)
+    train_data = load_dense_data('dense_data/train')
+    valid_data = load_dense_data('dense_data/valid')
+    loss = torch.nn.CrossEntropyLoss()   
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    global_step = 0    
+    for epoch in range(epochs):
+        model.train()
+        confusion_matrix = ConfusionMatrix()
+        for image, label in data_train:
+            image = image.to(device)
+            label = torch.tensor(label, dtype=torch.long, device=device)
+            pred = model(image)
+            loss_val = loss(pred, label)
+            confu.add(pred.argmax(1), label)
+            optim.zero_grad()
+            loss_val.backward()
+            optim.step()
+            train_logger.add_scalar('train/loss', float(loss_val), global_step=global_step)
+            global_step += 1
+        
+        print("------------------------------------------------------------")
+        print('Epoch: ', epoch)
+        print('Accuracy = ',confusion_matrix.average_accuracy)
+        model.eval()
+        confusion_matrix = ConfusionMatrix()
+        for i, (image, label) in enumerate(data_valid):
+            image, label = image.to(device), label.to(device)
+            pred = model(image)
+            confusion_matrix.add(pred.argmax(1), label)
+            
+        valid_logger.add_scalar('Eval/accuracy', float(confusion_matrix.average_accuracy), global_step=global_step)
+        valid_logger.add_scalar('Eval/iou', float(confusion_matrix.iou), global_step=global_step)
+        if valid_logger is None or train_logger is None:
+            print("------------------------------------------------------------")
+            print('Epoch: ', epoch)
+            print('Accuracy = ',confusion_matrix.average_accuracy)
+            print('Accuracy = ',confusion_matrix.iou)
     save_model(model)
 
 
