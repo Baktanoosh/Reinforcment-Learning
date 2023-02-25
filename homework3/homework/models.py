@@ -33,7 +33,7 @@ class FCN(torch.nn.Module):
         Hint: Use residual connections
         Hint: Always pad by kernel_size / 2, use an odd kernel_size
         """
-        layers=[32,64,128,256,512,1024,512,256,128,64,32]
+        layers=[32,64,128,256,512,1024,512,256,128,64,32,3]
         L = []  
         c = 32
         kernel_size = 3
@@ -64,12 +64,9 @@ class FCN(torch.nn.Module):
               if required (use z = z[:, :, :H, :W], where H and W are the height and width of a corresponding strided
               convolution
         """
-        identity = x
-        z = self.network(x)
+        z = self.net(x)
         z = z[:,:,:x.shape[2],:x.shape[3]]
-        if self.downsample is not None:
-            identity = self.downsample(x)
-        return z + identity
+        return z 
 
 model_factory = {
     'cnn': CNNClassifier,
