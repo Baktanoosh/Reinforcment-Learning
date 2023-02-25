@@ -33,26 +33,48 @@ class FCN(torch.nn.Module):
         Hint: Use residual connections
         Hint: Always pad by kernel_size / 2, use an odd kernel_size
         """
-        layers=[32,64,128,256,512,1024,512,256,128,64,32,3]
-        L = []  
-        c = 32
-        kernel_size = 3
+        c = 3
+        l = 5
         stride_coff = 1
-        padding_coff = 1 
-        for l in layers:
-            L.append(torch.nn.Conv2d(c, l, kernel_size, stride_coff, padding_coff))
-            L.append(torch.nn.BatchNorm2d(l))
-            L.append(torch.nn.ReLU())
-            if c > l:
-                L.append(torch.nn.UpsamplingBilinear2d(scale_factor = 2))
-            L.append(torch.nn.MaxPool2d(3,2,1))
-            c = l
-        L.append(torch.nn.Conv2d(32, 3, 96, 128)) 
-        self.network = torch.nn.Sequential(*L)
+        self.net = torch.nn.Sequential(
+          torch.nn.Conv2d(c, 32, 3, 2, 3),
+          torch.nn.BatchNorm2d(32),
+          torch.nn.ReLU(),
+          torch.nn.Conv2d(32, 64, 3, 2, 3),
+          torch.nn.BatchNorm2d(64),
+          torch.nn.ReLU(),
+          torch.nn.Conv2d(64, 128, 3, 1, 1),
+          torch.nn.BatchNorm2d(128),
+          torch.nn.ReLU(),
+          torch.nn.Conv2d(128, 256, 3, 1, 1),
+          torch.nn.BatchNorm2d(256),
+          torch.nn.ReLU(),
+          torch.nn.Conv2d(256, 512, 3, 1, 1),
+          torch.nn.BatchNorm2d(512),
+          torch.nn.ReLU(),
+          torch.nn.UpsamplingBilinear2d(scale_factor = 1),
+          torch.nn.Conv2d(512, 256, 3, 1, 1),
+          torch.nn.BatchNorm2d(256),
+          torch.nn.ReLU(),
+          torch.nn.UpsamplingBilinear2d(scale_factor = 1),
+          torch.nn.Conv2d(256, 128, 3, 1, 1),
+          torch.nn.BatchNorm2d(128),
+          torch.nn.ReLU(),
+          torch.nn.UpsamplingBilinear2d(scale_factor = 1),
+          torch.nn.Conv2d(128, 64, 3, 1, 1),
+          torch.nn.BatchNorm2d(64),
+          torch.nn.ReLU(),
+          torch.nn.UpsamplingBilinear2d(scale_factor = 2),
+          torch.nn.Conv2d(64, 32, 3, 1, 1),
+          torch.nn.BatchNorm2d(32),
+          torch.nn.ReLU(),
+          torch.nn.UpsamplingBilinear2d(scale_factor = 2),
+          torch.nn.Conv2d(32, l, 3, 1, 1)
+        )
         self.downsample = None
         if stride_coff != 1 or l != c:
             self.downsample = torch.nn.Sequential(torch.nn.Conv2d(l, l, 1),torch.nn.BatchNorm2d(l))
-        
+
         
     def forward(self, x):
         """
@@ -64,10 +86,12 @@ class FCN(torch.nn.Module):
               if required (use z = z[:, :, :H, :W], where H and W are the height and width of a corresponding strided
               convolution
         """
+        identity = x
         z = self.net(x)
         z = z[:,:,:x.shape[2],:x.shape[3]]
         return z 
 
+        
 model_factory = {
     'cnn': CNNClassifier,
     'fcn': FCN,
