@@ -52,7 +52,7 @@ def train(args):
         print('Accuracy = ',confusion_matrix.average_accuracy)
         model.eval()
         confusion_matrix = ConfusionMatrix()
-        for i, (image, label) in enumerate(data_valid):
+        for i, (image, label) in enumerate(valid_data):
             image, label = image.to(device), label.to(device)
             pred = model(image)
             confusion_matrix.add(pred.argmax(1), label)
