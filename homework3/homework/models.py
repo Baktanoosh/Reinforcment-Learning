@@ -33,7 +33,7 @@ class FCN(torch.nn.Module):
         Hint: Use residual connections
         Hint: Always pad by kernel_size / 2, use an odd kernel_size
         """
-        layers=[64,128,256,512,1024,512,256,128,64]
+        layers=[32,64,128,256,512,1024,512,256,128,64,32]
         L = []  
         c = 32
         kernel_size = 3
@@ -47,12 +47,11 @@ class FCN(torch.nn.Module):
                 L.append(torch.nn.UpsamplingBilinear2d(scale_factor = 2))
             L.append(torch.nn.MaxPool2d(3,2,1))
             c = l
-        L.append(torch.nn.Conv2d(c, 6, kernel_size=1)) 
+        L.append(torch.nn.Conv2d(32, 3, 96, 128)) 
         self.network = torch.nn.Sequential(*L)
         self.downsample = None
-            if stride != 1 or n_input != n_output:
-                self.downsample = torch.nn.Sequential(torch.nn.Conv2d(n_input, n_output, 1),
-                                                      torch.nn.BatchNorm2d(n_output))
+        if stride_coff != 1 or l != c:
+            self.downsample = torch.nn.Sequential(torch.nn.Conv2d(l, l, 1),torch.nn.BatchNorm2d(l))
         
         
     def forward(self, x):
