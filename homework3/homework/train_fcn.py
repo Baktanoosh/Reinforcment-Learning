@@ -44,11 +44,10 @@ def train(args):
             optimizer.zero_grad()
             loss_val.backward()
             optimizer.step()
-            train_logger.add_scalar('train/loss', float(loss_val), global_step=global_step)
             global_step += 1
         
         print("------------------------------------------------------------")
-        print('Epoch: ', epoch)
+        print('Epoch: ', epoch+1)
         print('Accuracy = ',confusion_matrix.average_accuracy)
         model.eval()
         confusion_matrix = ConfusionMatrix()
@@ -57,13 +56,10 @@ def train(args):
             pred = model(image)
             confusion_matrix.add(pred.argmax(1), label)
             
-        valid_logger.add_scalar('Eval/accuracy', float(confusion_matrix.average_accuracy), global_step=global_step)
-        valid_logger.add_scalar('Eval/iou', float(confusion_matrix.iou), global_step=global_step)
         if valid_logger is None or train_logger is None:
             print("------------------------------------------------------------")
-            print('Epoch: ', epoch)
-            print('Accuracy = ',confusion_matrix.average_accuracy)
-            print('Accuracy = ',confusion_matrix.iou)
+            print('Average_Accuracy = ',confusion_matrix.average_accuracy)
+            print('Intersection over Union = ',confusion_matrix.iou)
     save_model(model)
 
 
