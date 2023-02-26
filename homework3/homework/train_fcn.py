@@ -6,15 +6,16 @@ from .utils import load_dense_data, DENSE_CLASS_DISTRIBUTION, ConfusionMatrix
 from . import dense_transforms
 import torch.utils.tensorboard as tb
 schedule_lr=False
-learning_rate = 0.01
-num_epochs = 25
 
 def train(args):
+    if schedule_lr:
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=50)
     model = FCN()
     train_logger, valid_logger = None, None
     if args.log_dir is not None:
         train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'), flush_secs=1)
         valid_logger = tb.SummaryWriter(path.join(args.log_dir, 'valid'), flush_secs=1)
+
     """
     Your code here, modify your HW1 / HW2 code
     Hint: Use ConfusionMatrix, ConfusionMatrix.add(logit.argmax(1), label), ConfusionMatrix.iou to compute
@@ -22,20 +23,20 @@ def train(args):
     Hint: If you found a good data augmentation parameters for the CNN, use them here too. Use dense_transforms
     Hint: Use the log function below to debug and visualize your model
     """
-    
+    num_epochs = 25
+    learning_rate = 0.001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
     train_data = load_dense_data('dense_data/train')
     valid_data = load_dense_data('dense_data/valid')
     loss = torch.nn.CrossEntropyLoss()   
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=50)
     global_step = 0    
     for epoch in range(num_epochs):
         model.train()
         confusion_matrix = ConfusionMatrix()
-        val_loss = []
         for image, label in train_data:
             image = image.to(device)
             label = torch.tensor(label, dtype=torch.long, device=device)
@@ -46,6 +47,7 @@ def train(args):
             loss_val.backward()
             optimizer.step()
             global_step += 1
+            scheduler.step(np.mean(confusion_matrix.average_accuracy))
 
         print("------------------------------------------------------------")
         print('Epoch: ', epoch+1)
@@ -56,13 +58,11 @@ def train(args):
             image, label = image.to(device), label.to(device)
             pred = model(image)
             confusion_matrix.add(pred.argmax(1), label)
-            val_loss.append(confusion_matrix.average_accuracy.detach().cpu().numpy())
-
+            
         if valid_logger is None or train_logger is None:
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
-            print('Intersection over Union = ',confusion_matrix.iou)
-        scheduler.step(np.mean(val_loss))
+            print('Intersection over Union  = ',confusion_matrix.iou)
     save_model(model)
 
 
