@@ -2,6 +2,7 @@ import torch
 import torchvision
 import csv
 from PIL import Image
+import torchvision
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.transforms import functional as F
@@ -35,10 +36,14 @@ class SuperTuxDataset(Dataset):
                   j += 1
                 image_tensor = self.init_tensor(Image.open(dataset_path+"/"+file_name))
                 self.input_data.append((image_tensor,label_index))
-                transform.append(torchvision.transforms.RandomResizedCrop(96))
+			          transform.append(torchvision.transforms.Scale(256))
+			          transform.append(torchvision.transforms.CenterCrop(224))
+			          transform.append(torchvision.transforms.ToTensor())
+			          transform.append(torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
                 transform.append(torchvision.transforms.Normalize(mean=[0.4701, 0.4308, 0.3839], std=[0.2595, 0.2522, 0.2541]))
                 self.input_data.append(torchvision.transforms.Compose(transform))
-  
+                
+               
                 
     def __len__(self):
         self.length = len(self.input_data)
