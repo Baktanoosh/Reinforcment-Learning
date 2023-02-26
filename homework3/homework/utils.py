@@ -154,3 +154,5 @@ if __name__ == '__main__':
     for im, lbl in dataset:
         c += np.bincount(lbl.view(-1), minlength=len(DENSE_LABEL_NAMES))
     print(100 * c / np.sum(c))
+
+    
