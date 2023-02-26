@@ -16,7 +16,6 @@ class CNNClassifier(torch.nn.Module):
             c = l
         L.append(torch.nn.Conv2d(c, 6, kernel_size=1)) 
         self.network = torch.nn.Sequential(*L)
-        #transforms = torch.nn.Sequential(transforms.CenterCrop(10), transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),)
     def forward(self, x):
         return self.network(x).mean(dim=[2,3])
 
@@ -39,41 +38,50 @@ class FCN(torch.nn.Module):
         self.net = torch.nn.Sequential(
           torch.nn.Conv2d(c, 32, 3, 2, 3),
           torch.nn.BatchNorm2d(32),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.Conv2d(32, 64, 3, 2, 3),
           torch.nn.BatchNorm2d(64),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.Conv2d(64, 128, 3, 1, 1),
           torch.nn.BatchNorm2d(128),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.Conv2d(128, 256, 3, 1, 1),
           torch.nn.BatchNorm2d(256),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.Conv2d(256, 512, 3, 1, 1),
           torch.nn.BatchNorm2d(512),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.UpsamplingBilinear2d(scale_factor = 1),
           torch.nn.Conv2d(512, 256, 3, 1, 1),
           torch.nn.BatchNorm2d(256),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.UpsamplingBilinear2d(scale_factor = 1),
           torch.nn.Conv2d(256, 128, 3, 1, 1),
           torch.nn.BatchNorm2d(128),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.UpsamplingBilinear2d(scale_factor = 1),
           torch.nn.Conv2d(128, 64, 3, 1, 1),
           torch.nn.BatchNorm2d(64),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.UpsamplingBilinear2d(scale_factor = 2),
           torch.nn.Conv2d(64, 32, 3, 1, 1),
           torch.nn.BatchNorm2d(32),
+          torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
           torch.nn.UpsamplingBilinear2d(scale_factor = 2),
           torch.nn.Conv2d(32, l, 3, 1, 1)
         )
-        self.downsample = None
+        #transforms = torch.nn.Sequential(transforms.CenterCrop(10), transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),)
         if stride_coff != 1 or l != c:
-            self.downsample = torch.nn.Sequential(torch.nn.Conv2d(l, l, 1),torch.nn.BatchNorm2d(l))
+            self.downsample = torch.nn.Sequential(torch.nn.Conv2d(c, l, 1),torch.nn.BatchNorm2d(l))
 
         
     def forward(self, x):
@@ -87,9 +95,13 @@ class FCN(torch.nn.Module):
               convolution
         """
         identity = x
+        if self.downsample is not None:
+            identity = self.downsample(x)
         z = self.net(x)
         z = z[:,:,:x.shape[2],:x.shape[3]]
-        return z 
+        tag_scores = F.log_softmax(z)
+        return z + identity
+
 
         
 model_factory = {
@@ -113,4 +125,3 @@ def load_model(model):
     r = model_factory[model]()
     r.load_state_dict(load(path.join(path.dirname(path.abspath(__file__)), '%s.th' % model), map_location='cpu'))
     return r
-
