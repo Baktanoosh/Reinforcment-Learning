@@ -23,7 +23,7 @@ def train(args):
     Hint: Use the log function below to debug and visualize your model
     """
     num_epochs = 25
-    learning_rate = 0.0001
+    learning_rate = 0.001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
@@ -59,7 +59,7 @@ def train(args):
         if valid_logger is None or train_logger is None:
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
-            print('Intersection over Union = ',confusion_matrix.iou)
+            print('IoU = ',confusion_matrix.iou)
     save_model(model)
 
 
