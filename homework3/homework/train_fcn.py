@@ -6,8 +6,8 @@ from .utils import load_dense_data, DENSE_CLASS_DISTRIBUTION, ConfusionMatrix
 from . import dense_transforms
 import torch.utils.tensorboard as tb
 schedule_lr=False
-learning_rate = 0.001
-num_epochs = 50
+learning_rate = 0.01
+num_epochs = 25
 
 def train(args):
     model = FCN()
@@ -56,7 +56,7 @@ def train(args):
             image, label = image.to(device), label.to(device)
             pred = model(image)
             confusion_matrix.add(pred.argmax(1), label)
-            val_loss.append(confusion_matrix.iou.detach().cpu().numpy())
+            val_loss.append(confusion_matrix.average_accuracy.detach().cpu().numpy())
 
         if valid_logger is None or train_logger is None:
             print("------------------------------------------------------------")
