@@ -35,11 +35,10 @@ class SuperTuxDataset(Dataset):
                   j += 1
                 image_tensor = self.init_tensor(Image.open(dataset_path+"/"+file_name))
                 self.input_data.append((image_tensor,label_index))
-                transform.append(torchvision.transforms.RandomResizedCrop(random_crop))
+                transform.append(torchvision.transforms.RandomResizedCrop(96))
                 transform.append(torchvision.transforms.Normalize(mean=[0.4701, 0.4308, 0.3839], std=[0.2595, 0.2522, 0.2541]))
                 self.input_data.append(torchvision.transforms.Compose(transform))
-                
-               
+  
                 
     def __len__(self):
         self.length = len(self.input_data)
@@ -154,5 +153,3 @@ if __name__ == '__main__':
     for im, lbl in dataset:
         c += np.bincount(lbl.view(-1), minlength=len(DENSE_LABEL_NAMES))
     print(100 * c / np.sum(c))
-
-    
