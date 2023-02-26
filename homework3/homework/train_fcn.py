@@ -13,8 +13,6 @@ def train(args):
     if args.log_dir is not None:
         train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'), flush_secs=1)
         valid_logger = tb.SummaryWriter(path.join(args.log_dir, 'valid'), flush_secs=1)
-        if log_string is not None:
-            train_logger.add_text("info", log_string)
     """
     Your code here, modify your HW1 / HW2 code
     Hint: Use ConfusionMatrix, ConfusionMatrix.add(logit.argmax(1), label), ConfusionMatrix.iou to compute
@@ -36,6 +34,7 @@ def train(args):
     for epoch in range(num_epochs):
         model.train()
         confusion_matrix = ConfusionMatrix()
+        val_loss = []
         for image, label in train_data:
             image = image.to(device)
             label = torch.tensor(label, dtype=torch.long, device=device)
@@ -46,7 +45,7 @@ def train(args):
             loss_val.backward()
             optimizer.step()
             global_step += 1
-        
+
         print("------------------------------------------------------------")
         print('Epoch: ', epoch+1)
         print('Accuracy = ',confusion_matrix.average_accuracy)
@@ -56,12 +55,14 @@ def train(args):
             image, label = image.to(device), label.to(device)
             pred = model(image)
             confusion_matrix.add(pred.argmax(1), label)
-            
+            val_loss.append(confusion_matrix.iou.detach().cpu().numpy())
+
         if valid_logger is None or train_logger is None:
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
             print('IoU = ',confusion_matrix.iou)
-        scheduler.step(np.mean(loss_val))
+        if global_step % 2 == 0 :
+          scheduler.step(np.mean(val_loss))
     save_model(model)
 
 
