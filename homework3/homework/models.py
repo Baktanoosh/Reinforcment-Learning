@@ -113,3 +113,4 @@ def load_model(model):
     r = model_factory[model]()
     r.load_state_dict(load(path.join(path.dirname(path.abspath(__file__)), '%s.th' % model), map_location='cpu'))
     return r
+
