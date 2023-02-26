@@ -61,9 +61,8 @@ def train(args):
         if valid_logger is None or train_logger is None:
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
-            print('IoU = ',confusion_matrix.iou)
-        if global_step % 2 == 0 :
-          scheduler.step(np.mean(val_loss))
+            print('Intersection over Union = ',confusion_matrix.iou)
+        scheduler.step(np.mean(val_loss))
     save_model(model)
 
 
