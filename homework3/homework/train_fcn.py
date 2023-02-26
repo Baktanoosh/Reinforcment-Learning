@@ -8,14 +8,13 @@ import torch.utils.tensorboard as tb
 schedule_lr=False
 
 def train(args):
-    if schedule_lr:
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=50)
     model = FCN()
     train_logger, valid_logger = None, None
     if args.log_dir is not None:
         train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'), flush_secs=1)
         valid_logger = tb.SummaryWriter(path.join(args.log_dir, 'valid'), flush_secs=1)
-
+        if log_string is not None:
+            train_logger.add_text("info", log_string)
     """
     Your code here, modify your HW1 / HW2 code
     Hint: Use ConfusionMatrix, ConfusionMatrix.add(logit.argmax(1), label), ConfusionMatrix.iou to compute
@@ -31,7 +30,8 @@ def train(args):
     train_data = load_dense_data('dense_data/train')
     valid_data = load_dense_data('dense_data/valid')
     loss = torch.nn.CrossEntropyLoss()   
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=50)
     global_step = 0    
     for epoch in range(num_epochs):
         model.train()
@@ -61,7 +61,6 @@ def train(args):
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
             print('IoU = ',confusion_matrix.iou)
-        train_logger.add_scalar('lr', optimizer.param_groups[0]['lr'], global_step=global_step)
         scheduler.step(np.mean(loss_val))
     save_model(model)
 
