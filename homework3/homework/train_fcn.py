@@ -6,6 +6,8 @@ from .utils import load_dense_data, DENSE_CLASS_DISTRIBUTION, ConfusionMatrix
 from . import dense_transforms
 import torch.utils.tensorboard as tb
 schedule_lr=False
+learning_rate = 0.001
+num_epochs = 50
 
 def train(args):
     model = FCN()
@@ -20,8 +22,7 @@ def train(args):
     Hint: If you found a good data augmentation parameters for the CNN, use them here too. Use dense_transforms
     Hint: Use the log function below to debug and visualize your model
     """
-    num_epochs = 50
-    learning_rate = 0.001
+    
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
