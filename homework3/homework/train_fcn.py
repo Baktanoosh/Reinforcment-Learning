@@ -23,7 +23,7 @@ def train(args):
     Hint: If you found a good data augmentation parameters for the CNN, use them here too. Use dense_transforms
     Hint: Use the log function below to debug and visualize your model
     """
-    num_epochs = 25
+    num_epochs = 50
     learning_rate = 0.001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
@@ -61,9 +61,8 @@ def train(args):
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
             print('IoU = ',confusion_matrix.iou)
-        if schedule_lr:
-            train_logger.add_scalar('lr', optimizer.param_groups[0]['lr'], global_step=global_step)
-            scheduler.step(np.mean(val_accuracies))
+        train_logger.add_scalar('lr', optimizer.param_groups[0]['lr'], global_step=global_step)
+        scheduler.step(np.mean(loss_val))
     save_model(model)
 
 
