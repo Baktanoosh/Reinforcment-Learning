@@ -1,14 +1,15 @@
 import torch
 import numpy as np
-
+from os import path
 from .models import FCN, save_model
 from .utils import load_dense_data, DENSE_CLASS_DISTRIBUTION, ConfusionMatrix
 from . import dense_transforms
 import torch.utils.tensorboard as tb
-
+schedule_lr=False
 
 def train(args):
-    from os import path
+    if schedule_lr:
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=50)
     model = FCN()
     train_logger, valid_logger = None, None
     if args.log_dir is not None:
@@ -60,6 +61,9 @@ def train(args):
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
             print('IoU = ',confusion_matrix.iou)
+        if schedule_lr:
+            train_logger.add_scalar('lr', optimizer.param_groups[0]['lr'], global_step=global_step)
+            scheduler.step(np.mean(val_accuracies))
     save_model(model)
 
 
