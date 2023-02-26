@@ -18,6 +18,7 @@ class SuperTuxDataset(Dataset):
     WARNING: Do not perform data normalization here. 
     """
     def __init__(self, dataset_path):
+        transform = []
         self.init_tensor = torchvision.transforms.ToTensor()
         with open(dataset_path+"/"+"labels.csv") as labels_csv_file:
             label_reader = csv.reader(labels_csv_file)
@@ -34,6 +35,12 @@ class SuperTuxDataset(Dataset):
                   j += 1
                 image_tensor = self.init_tensor(Image.open(dataset_path+"/"+file_name))
                 self.input_data.append((image_tensor,label_index))
+                transform.append(torchvision.transforms.RandomResizedCrop(random_crop))
+                transform.append(torchvision.transforms.Normalize(mean=[0.4701, 0.4308, 0.3839], std=[0.2595, 0.2522, 0.2541]))
+                self.input_data.append(torchvision.transforms.Compose(transform))
+                
+               
+                
     def __len__(self):
         self.length = len(self.input_data)
         return self.length
