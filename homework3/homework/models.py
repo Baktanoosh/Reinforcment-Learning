@@ -36,11 +36,11 @@ class FCN(torch.nn.Module):
         l = 5
         stride_coff = 1
         self.net = torch.nn.Sequential(
-          torch.nn.Conv2d(c, 32, 7, 2, 3),
+          torch.nn.Conv2d(3, 32, 5, 1, 3),
           torch.nn.BatchNorm2d(32),
           torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
-          torch.nn.Conv2d(32, 64, 3, 2, 3),
+          torch.nn.Conv2d(32, 64, 3, 1, 3),
           torch.nn.BatchNorm2d(64),
           torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
