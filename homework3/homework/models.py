@@ -36,7 +36,7 @@ class FCN(torch.nn.Module):
         l = 5
         stride_coff = 1
         self.net = torch.nn.Sequential(
-          torch.nn.Conv2d(c, 32, 3, 2, 3),
+          torch.nn.Conv2d(c, 32, 7, 2, 3),
           torch.nn.BatchNorm2d(32),
           torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
@@ -68,10 +68,12 @@ class FCN(torch.nn.Module):
           torch.nn.BatchNorm2d(64),
           torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
+          torch.nn.UpsamplingBilinear2d(scale_factor = 2),
           torch.nn.Conv2d(64, 32, 3, 1, 1),
           torch.nn.BatchNorm2d(32),
           torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
+           torch.nn.UpsamplingBilinear2d(scale_factor = 2),
           torch.nn.Conv2d(32, l, 3, 1, 1)
         )
         #transforms = torch.nn.Sequential(transforms.CenterCrop(10), transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),)
@@ -94,7 +96,7 @@ class FCN(torch.nn.Module):
             identity = self.downsample(x)
         z = self.net(x)
         z = z[:,:,:x.shape[2],:x.shape[3]]
-        tag_scores = F.log_softmax(z)
+        tag_scores = F.log_softmax(z,dim=1)
         return z + identity
 
 
