@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from os import path
 from .models import FCN, save_model
-from .utils import load_dense_data, DENSE_CLASS_DISTRIBUTION, ConfusionMatrix
+from .utils import load_dense_data, DENSE_CLASS_DISTRIBUTION, ConfusionMatrix, class_accuracy
 from . import dense_transforms
 import torch.utils.tensorboard as tb
 schedule_lr=False
@@ -47,7 +47,7 @@ def train(args):
             loss_val.backward()
             optimizer.step()
             global_step += 1
-            scheduler.step(np.mean(confusion_matrix.average_accuracy))
+            scheduler.step(np.mean(class_accuracy()))
 
         print("------------------------------------------------------------")
         print('Epoch: ', epoch+1)
