@@ -8,14 +8,7 @@ import torch.utils.tensorboard as tb
 schedule_lr=False
 
 def train(args):
-    if schedule_lr:
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=50)
     model = FCN()
-    train_logger, valid_logger = None, None
-    if args.log_dir is not None:
-        train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'), flush_secs=1)
-        valid_logger = tb.SummaryWriter(path.join(args.log_dir, 'valid'), flush_secs=1)
-
     """
     Your code here, modify your HW1 / HW2 code
     Hint: Use ConfusionMatrix, ConfusionMatrix.add(logit.argmax(1), label), ConfusionMatrix.iou to compute
@@ -28,11 +21,13 @@ def train(args):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
-    train_data = load_dense_data('dense_data/train')
+    transform = dense_transforms.Compose((dense_transforms.ColorJitter(0.4701, 0.4308, 0.3839), 
+                  dense_transforms.RandomHorizontalFlip(), dense_transforms.RandomCrop(96), dense_transforms.ToTensor()))
+    train_data = load_dense_data('dense_data/train', transform=transform)
     valid_data = load_dense_data('dense_data/valid')
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=50)
+    #scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=50)
     global_step = 0    
     for epoch in range(num_epochs):
         model.train()
@@ -47,7 +42,6 @@ def train(args):
             loss_val.backward()
             optimizer.step()
             global_step += 1
-        scheduler.step(np.mean(confusion_matrix.average_accuracy))
 
         print("------------------------------------------------------------")
         print('Epoch: ', epoch+1)
@@ -59,10 +53,10 @@ def train(args):
             pred = model(image)
             confusion_matrix.add(pred.argmax(1), label)
             
-        if valid_logger is None or train_logger is None:
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
             print('Intersection over Union  = ',confusion_matrix.iou)
+        #scheduler.step(np.mean(confusion_matrix.global_accuracy))
     save_model(model)
 
 
