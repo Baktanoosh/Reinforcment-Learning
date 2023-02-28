@@ -19,8 +19,9 @@ class SuperTuxDataset(Dataset):
     """
     WARNING: Do not perform data normalization here. 
     """
-    def __init__(self, dataset_path):
+    def __init__(self, dataset_path, transform=None):
         self.init_tensor = torchvision.transforms.ToTensor()
+        self.transform = transform
         with open(dataset_path+"/"+"labels.csv") as labels_csv_file:
             label_reader = csv.reader(labels_csv_file)
             next(label_reader) 
@@ -37,8 +38,6 @@ class SuperTuxDataset(Dataset):
                 image_tensor = self.init_tensor(Image.open(dataset_path+"/"+file_name))
                 self.input_data.append((image_tensor,label_index))
                
-
-              
                 
     def __len__(self):
         self.length = len(self.input_data)
@@ -46,8 +45,13 @@ class SuperTuxDataset(Dataset):
 
 
     def __getitem__(self, idx):
-        self.item = self.input_data[idx]
-        return self.item
+        item = self.input_data[idx]
+        image = item[0]
+        if self.transform is not None:
+            image = self.transform(image)
+        return image, item[1]
+        
+     
 
 class DenseSuperTuxDataset(Dataset):
     def __init__(self, dataset_path, transform=dense_transforms.ToTensor()):
