@@ -5,7 +5,7 @@ import torch.nn.functional as F
 class CNNClassifier(torch.nn.Module):
     def __init__(self, layers=[64,128,256,512,1024], n_input_channels=3, kernel_size=3):
         super().__init__()
-
+        stride_coff = 1
         L = []  
         c = n_input_channels  
         for l in layers:
@@ -17,7 +17,7 @@ class CNNClassifier(torch.nn.Module):
         L.append(torch.nn.Conv2d(c, 6, kernel_size=1)) 
         self.network = torch.nn.Sequential(*L)
     def forward(self, x):
-        return self.network(x).mean(dim=[2,3])
+      return self.network(x).mean(dim=[2,3]) 
 
 
 
@@ -36,7 +36,7 @@ class FCN(torch.nn.Module):
         l = 5
         stride_coff = 1
         self.net = torch.nn.Sequential(
-          torch.nn.Conv2d(3, 32, 5, 1, 3),
+          torch.nn.Conv2d(3, 32, 7, 1, 3),
           torch.nn.BatchNorm2d(32),
           torch.nn.Dropout(p=0.25),
           torch.nn.ReLU(),
@@ -95,7 +95,8 @@ class FCN(torch.nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
         z = self.net(x)
-        z = z[:,:,:x.shape[2],:x.shape[3]]
+        H, W = x.size(2), x.size(3)
+        z = z[:,:,:H,:W]
         tag_scores = F.log_softmax(z,dim=1)
         return z + identity
 
