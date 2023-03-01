@@ -37,7 +37,8 @@ class SuperTuxDataset(Dataset):
                   j += 1
                 image_tensor = self.init_tensor(Image.open(dataset_path+"/"+file_name))
                 self.input_data.append((image_tensor,label_index))
-               
+            self.transform = transform
+
                 
     def __len__(self):
         self.length = len(self.input_data)
