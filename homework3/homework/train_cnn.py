@@ -17,14 +17,14 @@ def train(args):
     train_path = "/content/cs342/homework3/data/train"
     valid_path = "/content/cs342/homework3/data/valid"
     
-    num_epochs = 25
+    num_epochs = 50
     learning_rate = 0.001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
     transform = trans.Compose((trans.ToPILImage(), trans.ColorJitter(0.4701, 0.4308, 0.3839), trans.RandomHorizontalFlip(), trans.RandomCrop(32), trans.ToTensor()))
     train_data = load_data(train_path , transform=transform)
     valid_data = load_data(valid_path)
