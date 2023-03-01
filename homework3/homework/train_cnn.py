@@ -25,8 +25,9 @@ def train(args):
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
-    transform = trans.Compose((trans.ToPILImage(), trans.ColorJitter(0.4701, 0.4308, 0.3839), trans.RandomHorizontalFlip(), trans.RandomCrop(32), trans.ToTensor()))
-    train_data = load_data(train_path , transform=transform)
+    #transform = trans.Compose((trans.ToPILImage(), trans.ColorJitter(0.4701, 0.4308, 0.3839), trans.RandomCrop(32), trans.ToTensor()))
+    #train_data = load_data(train_path , transform=transform)
+    train_data = load_data(train_path)
     valid_data = load_data(valid_path)
     global_step = 0
     for epoch in range(num_epochs):
@@ -59,17 +60,12 @@ def train(args):
         print("------------------------------------------------------------")
         print("Epoch: " + str(epoch+1))
         print("Accuracy: " + "{0:.3f}".format(accuracy/total_step))  
-    
     save_model(model)
 
 if __name__ == '__main__':
     import argparse
-
     parser = argparse.ArgumentParser()
-
     parser.add_argument('--log_dir')
-    # Put custom arguments here
-
     args = parser.parse_args()
     train(args)
 
