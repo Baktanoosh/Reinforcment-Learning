@@ -43,11 +43,11 @@ class FCN(torch.nn.Module):
         kernel_size = 3
         L.append(torch.nn.Conv2d(3, 32, 3, stride, padding=3, bias=False))
         L.append(torch.nn.BatchNorm2d(32))
-        L.append(torch.nn.MaxPool2d(2, stride=2))
+        L.append(torch.nn.MaxPool2d(2, stride=1))
         L.append(torch.nn.ReLU())
         L.append(torch.nn.Conv2d(32, 64, 3, stride, padding=3, bias=False))
         L.append(torch.nn.BatchNorm2d(64))
-        L.append(torch.nn.MaxPool2d(2, stride=2))
+        L.append(torch.nn.MaxPool2d(2, stride=1))
         L.append(torch.nn.ReLU())
         c=64
         for l in layer_up:
@@ -57,7 +57,6 @@ class FCN(torch.nn.Module):
             c = l
         c=512   
         for l in layer_down:
-            L.append(torch.nn.Upsample(scale_factor=2, mode='bilinear'))
             L.append(torch.nn.Conv2d(c, l, kernel_size, stride, padding, bias=False))
             L.append(torch.nn.BatchNorm2d(l))
             L.append(torch.nn.ReLU())
