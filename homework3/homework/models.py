@@ -96,7 +96,7 @@ class FCN(torch.nn.Module):
         """
         z = self.net(x)
         z = z[:,:,:x.shape[2],:x.shape[3]]
-        tag_scores = F.log_softmax(z, dim=0)
+        tag_scores = F.log_softmax(z, dim=1)
         return tag_scores 
 
 
