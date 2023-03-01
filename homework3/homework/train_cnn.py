@@ -1,107 +1,70 @@
+from .models import CNNClassifier, save_model
+from .utils import ConfusionMatrix, load_data, LABEL_NAMES
 import torch
-import torch.nn.functional as F
+import torchvision
+import torchvision.transforms as trans
+import torch.utils.tensorboard as tb
+import numpy as np
+from os import path
 
-        
-class CNNClassifier(torch.nn.Module):
-    def __init__(self, layers=[64,128,256,512], input_channels=3, kernel_size=3):
-        super().__init__()
-        L = []  
-        c = input_channels  
-        for l in layers:
-            L.append(torch.nn.Conv2d(c, l, kernel_size, stride=1, bias=False))
-            L.append(torch.nn.BatchNorm2d(l))
-            L.append(torch.nn.ReLU())
-            L.append(torch.nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
-            c = l
-        L.append(torch.nn.Dropout(0.2))
-        L.append(torch.nn.Conv2d(c, 6, kernel_size=1, stride=1, bias=False))
-        self.network = torch.nn.Sequential(*L)
+def train(args):
+    model = CNNClassifier()
+    train_logger, valid_logger = None, None
+    if args.log_dir is not None:
+        train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'), flush_secs=1)
+        valid_logger = tb.SummaryWriter(path.join(args.log_dir, 'valid'), flush_secs=1)
+  
+    train_path = "/content/cs342/homework3/data/train"
+    valid_path = "/content/cs342/homework3/data/valid"
+    
+    num_epochs = 100
+    learning_rate = 0.001
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    print('device = ', device)
+    model.to(device)
+    loss = torch.nn.CrossEntropyLoss()   
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+    train_data = load_data(train_path )
+    valid_data = load_data(valid_path)
+    global_step = 0
+    for epoch in range(num_epochs):
+        model.train()
+        train_accuracy = []
+        train_accuracy_value = []
+        train_loss = []
+        train_loss_value = []
+        valid_accuracy = []
+        valid_accuracy_value = []
 
-    def forward(self, x):
-        z = self.network(x).mean(dim=[2,3])
-        return z
+        for i, (data, labels) in enumerate(train_data):
+            o = model(data.to(device))
+            train_loss = loss(o, labels.to(device))
+            train_loss_value.append(train_loss.float().detach().cpu().numpy())
+            optimizer.zero_grad()
+            train_loss.backward()
+            optimizer.step()
+            global_step += 1
+        scheduler.step()    
+        model.eval()
+        total_step = 0
+        accuracy = 0
+        for image, label in valid_data:
+          image = image.to(device)
+          label = label.to(device)
+          pred = model(image)
+          accuracy = accuracy + (pred.argmax(1) == label).float().mean().item()
+          total_step += 1
+        print("------------------------------------------------------------")
+        print("Epoch: " + str(epoch+1))
+        print("Accuracy: " + "{0:.3f}".format(accuracy/total_step))  
+    save_model(model)
 
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log_dir')
+    args = parser.parse_args()
+    train(args)
 
-class FCN(torch.nn.Module):
-    def __init__(self, input_channels=3, output_channel=5, kernel_size=3, stride = 2):
-        super().__init__()
-        """
-        Your code here.
-        Hint: The FCN can be a bit smaller the the CNNClassifier since you need to run it at a higher resolution
-        Hint: Use up-convolutions
-        Hint: Use skip connections
-        Hint: Use residual connections
-        Hint: Always pad by kernel_size / 2, use an odd kernel_size
-        """
-        L = []
-        c = input_channels
-        l = output_channel
-        padding = (kernel_size-1)//2
-        layer_up = [128,256,512]
-        layer_down = [256,128,64,32]
-        stride = 1
-        kernel_size = 3
-        L.append(torch.nn.Conv2d(3, 32, 3, stride, padding=3, bias=False))
-        L.append(torch.nn.BatchNorm2d(32))
-        L.append(torch.nn.ReLU())
-        L.append(torch.nn.Conv2d(32, 64, 3, stride, padding=3, bias=False))
-        L.append(torch.nn.BatchNorm2d(64))
-        L.append(torch.nn.ReLU())
-        c=64
-        for l in layer_up:
-            L.append(torch.nn.Conv2d(c, l, kernel_size, stride, padding, bias=False))
-            L.append(torch.nn.BatchNorm2d(l))
-            L.append(torch.nn.ReLU())
-            c = l
-        c=512   
-        for l in layer_down:
-            L.append(torch.nn.Conv2d(c, l, kernel_size, stride, padding, bias=False))
-            L.append(torch.nn.BatchNorm2d(l))
-            L.append(torch.nn.ReLU())
-            c = l
-
-        L.append(torch.nn.Conv2d(32, l, 3, stride= 1))
-        self.network = torch.nn.Sequential(*L)
-
-        if stride != 1 or l != c:
-            self.downsample = torch.nn.Sequential(torch.nn.Conv2d(c, l, 1),torch.nn.BatchNorm2d(l))
-
-        
-    def forward(self, x):
-        """
-        Your code here
-        @x: torch.Tensor((B,3,H,W))
-        @return: torch.Tensor((B,5,H,W))
-        Hint: Apply input normalization inside the network, to make sure it is applied in the grader
-        Hint: Input and output resolutions need to match, use output_padding in up-convolutions, crop the output
-              if required (use z = z[:, :, :H, :W], where H and W are the height and width of a corresponding strided
-              convolution
-        """
-        z = self.network(x)
-        z = z[:,:,:x.shape[2],:x.shape[3]]
-        tag_scores = F.log_softmax(z, dim=1)
-        return tag_scores 
-
-
-        
-model_factory = {
-    'cnn': CNNClassifier,
-    'fcn': FCN,
-}
-
-
-def save_model(model):
-    from torch import save
-    from os import path
-    for n, m in model_factory.items():
-        if isinstance(model, m):
-            return save(model.state_dict(), path.join(path.dirname(path.abspath(__file__)), '%s.th' % n))
-    raise ValueError("model type '%s' not supported!" % str(type(model)))
-
-
-def load_model(model):
-    from torch import load
-    from os import path
-    r = model_factory[model]()
-    r.load_state_dict(load(path.join(path.dirname(path.abspath(__file__)), '%s.th' % model), map_location='cpu'))
-    return r
+    
