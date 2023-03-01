@@ -23,12 +23,20 @@ class SuperTuxDataset(Dataset):
         self.init_tensor = torchvision.transforms.ToTensor()
         self.transform = transform
         with open(dataset_path+"/"+"labels.csv") as labels_csv_file:
-            label_reader = random.shuffle(csv.reader(labels_csv_file))
+            label_reader = csv.reader(labels_csv_file)
+            #row_count = sum(1 for row in label_reader)
             next(label_reader) 
             self.input_data = []
+            imag = [[]]
+            count = 0
             for row in label_reader:
-                file_name = row[0]
-                label = row[1]
+                 imag.append(row)
+                 count +=1
+            imag.pop(0)
+            random.shuffle(imag)
+            for i in range(count):
+                file_name = imag[i][0]
+                label = imag[i][1]
                 j = 0
                 for i in LABEL_NAMES:
                   if  label == i:
