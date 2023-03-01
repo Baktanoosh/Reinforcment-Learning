@@ -7,7 +7,7 @@ import torchvision
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.transforms import functional as F
-
+import random
 from . import dense_transforms
 
 LABEL_NAMES = ['background', 'kart', 'pickup', 'nitro', 'bomb', 'projectile']
@@ -23,7 +23,7 @@ class SuperTuxDataset(Dataset):
         self.init_tensor = torchvision.transforms.ToTensor()
         self.transform = transform
         with open(dataset_path+"/"+"labels.csv") as labels_csv_file:
-            label_reader = csv.reader(labels_csv_file)
+            label_reader = random.shuffle(csv.reader(labels_csv_file))
             next(label_reader) 
             self.input_data = []
             for row in label_reader:
