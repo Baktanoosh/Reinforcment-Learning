@@ -5,23 +5,20 @@ import torch.nn.functional as F
 class CNNClassifier(torch.nn.Module):
     def __init__(self, layers=[64,128,256,512], input_channels=3, kernel_size=3):
         super().__init__()
-
         L = []  
         c = input_channels  
         for l in layers:
-            L.append(torch.nn.Conv2d(c, l, kernel_size))
+            L.append(torch.nn.Conv2d(c, l, kernel_size, stride=1, bias=False))
             L.append(torch.nn.BatchNorm2d(l))
             L.append(torch.nn.ReLU())
-            L.append(torch.nn.MaxPool2d(3,2,1))
+            L.append(torch.nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
             c = l
-        L.append(torch.nn.Conv2d(c, 6, kernel_size=1)) 
+        L.append(torch.nn.Conv2d(c, 6, kernel_size=1, stride=1, bias=False))
         self.network = torch.nn.Sequential(*L)
 
     def forward(self, x):
         z = self.network(x).mean(dim=[2,3])
-        tag_scores = F.log_softmax(z, dim=1)
-        return tag_scores
-
+        return z
 
 
 class FCN(torch.nn.Module):
@@ -38,36 +35,35 @@ class FCN(torch.nn.Module):
         L = []
         c = input_channels
         l = output_channel
-        stride_coff = 1
+        stride = 2
         padding = (kernel_size-1)//2
         layer_up = [64,128,256,512]
         layer_down = [512,256,128,32]
-        L.append(torch.nn.Conv2d(input_channels, 32, 3, 2, 3))
+        L.append(torch.nn.Conv2d(input_channels, 32, 3, stride, padding, bias=False))
         L.append(torch.nn.BatchNorm2d(32))
         L.append(torch.nn.Dropout(p=0.25))
         L.append(torch.nn.ReLU())
-        L.append(torch.nn.Conv2d(32, 64, 3, 2, 3))
+        L.append(torch.nn.Conv2d(32, 64, 3, stride, padding, bias=False))
         L.append(torch.nn.BatchNorm2d(64))
         L.append(torch.nn.Dropout(p=0.25))
         L.append(torch.nn.ReLU())
 
         for l in layer_up:
-            L.append(torch.nn.Conv2d(c, l, kernel_size, padding))
+            L.append(torch.nn.Conv2d(c, l, kernel_size, stride, padding, bias=False))
             L.append(torch.nn.BatchNorm2d(l))
             L.append(torch.nn.ReLU())
             L.append(torch.nn.MaxPool2d(3,2,1))
             c = l
         for l in layer_down:
-            L.append(torch.nn.Conv2d(c, l, kernel_size, padding))
+            L.append(torch.nn.Conv2d(c, l, kernel_size, stride, padding, bias=False))
             L.append(torch.nn.BatchNorm2d(l))
             L.append(torch.nn.ReLU())
             L.append(torch.nn.MaxPool2d(3,2,1))
             c = l
-
-        L.append(torch.nn.Conv2d(32, 1, kernel_size=1, stride= 1)) 
+        L.append(torch.nn.Conv2d(32, 1, kernel_size=1, stride= 1))
         self.network = torch.nn.Sequential(*L)
 
-        if stride_coff != 1 or l != c:
+        if stride != 1 or l != c:
             self.downsample = torch.nn.Sequential(torch.nn.Conv2d(c, l, 1),torch.nn.BatchNorm2d(l))
 
         
