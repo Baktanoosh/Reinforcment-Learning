@@ -2,6 +2,7 @@ from .models import CNNClassifier, save_model
 from .utils import ConfusionMatrix, load_data, LABEL_NAMES
 import torch
 import torchvision
+import torchvision.transforms as trans
 import torch.utils.tensorboard as tb
 import numpy as np
 from os import path
@@ -21,10 +22,11 @@ def train(args):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
-    train_data = load_data(train_path)
-    valid_data = load_data(valid_path)
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    transform = trans.Compose((trans.ToPILImage(), trans.ColorJitter(0.4701, 0.4308, 0.3839), trans.RandomHorizontalFlip(), trans.RandomCrop(32), trans.ToTensor()))
+    train_data = load_data(train_path , transform=transform)
+    valid_data = load_data(valid_path)
     global_step = 0
     for epoch in range(num_epochs):
         model.train()
