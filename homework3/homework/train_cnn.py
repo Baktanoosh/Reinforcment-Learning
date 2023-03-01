@@ -16,8 +16,8 @@ def train(args):
     train_path = "/content/cs342/homework3/data/train"
     valid_path = "/content/cs342/homework3/data/valid"
     
-    num_epochs = 100
-    learning_rate = 0.0001
+    num_epochs = 25
+    learning_rate = 0.001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
@@ -55,8 +55,8 @@ def train(args):
           total_step += 1
         print("------------------------------------------------------------")
         print("Epoch: " + str(epoch+1))
-        print("Accuracy: " + str(accuracy/total_step))  
-
+        print("Accuracy: " + "{0:.3f}".format(accuracy/total_step))  
+    
     save_model(model)
 
 if __name__ == '__main__':
