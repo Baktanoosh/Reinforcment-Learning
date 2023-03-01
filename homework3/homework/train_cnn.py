@@ -24,6 +24,7 @@ def train(args):
     model.to(device)
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
     transform = trans.Compose((trans.ToPILImage(), trans.ColorJitter(0.4701, 0.4308, 0.3839), trans.RandomHorizontalFlip(), trans.RandomCrop(32), trans.ToTensor()))
     train_data = load_data(train_path , transform=transform)
     valid_data = load_data(valid_path)
@@ -45,7 +46,7 @@ def train(args):
             train_loss.backward()
             optimizer.step()
             global_step += 1
-            
+        scheduler.step()    
         model.eval()
         total_step = 0
         accuracy = 0
