@@ -13,7 +13,6 @@ class CNNClassifier(torch.nn.Module):
             L.append(torch.nn.ReLU())
             L.append(torch.nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
             c = l
-        L.append(torch.nn.Dropout(0.2))
         L.append(torch.nn.Conv2d(c, 6, kernel_size=1, stride=1, bias=False))
         self.network = torch.nn.Sequential(*L)
 
@@ -33,37 +32,50 @@ class FCN(torch.nn.Module):
         Hint: Use residual connections
         Hint: Always pad by kernel_size / 2, use an odd kernel_size
         """
-        L = []
         c = input_channels
         l = output_channel
         padding = (kernel_size-1)//2
-        layer_up = [128,256,512]
-        layer_down = [256,128,64,32]
         stride = 1
         kernel_size = 3
-        L.append(torch.nn.Conv2d(3, 32, 3, stride, padding=3, bias=False))
-        L.append(torch.nn.BatchNorm2d(32))
-        L.append(torch.nn.MaxPool2d(2, stride=1))
-        L.append(torch.nn.ReLU())
-        L.append(torch.nn.Conv2d(32, 64, 3, stride, padding=3, bias=False))
-        L.append(torch.nn.BatchNorm2d(64))
-        L.append(torch.nn.MaxPool2d(2, stride=1))
-        L.append(torch.nn.ReLU())
-        c=64
-        for l in layer_up:
-            L.append(torch.nn.Conv2d(c, l, kernel_size, stride, padding, bias=False))
-            L.append(torch.nn.BatchNorm2d(l))
-            L.append(torch.nn.ReLU())
-            c = l
-        c=512   
-        for l in layer_down:
-            L.append(torch.nn.Conv2d(c, l, kernel_size, stride, padding, bias=False))
-            L.append(torch.nn.BatchNorm2d(l))
-            L.append(torch.nn.ReLU())
-            c = l
+        
+        self.L1 = torch.nn.Sequential(torch.nn.Conv2d(3, 3, 1, stride, padding=1, bias=False),
+            torch.nn.Conv2d(3, 32, 3, stride, padding=1, bias=False),
+            torch.nn.Conv2d(32, 32, 1, stride, padding=1, bias=False),
+            torch.nn.ReLU(),      
+            torch.nn.MaxPool2d(2, stride=2))
 
-        L.append(torch.nn.Conv2d(32, 5, 3, stride= 1))
-        self.network = torch.nn.Sequential(*L)
+        self.L2 = torch.nn.Sequential(torch.nn.Conv2d(32, 32, 1, stride, padding=1, bias=False),
+            torch.nn.Conv2d(32, 64, 3, stride, padding=1, bias=False),
+            torch.nn.Conv2d(64, 64, 1, stride, padding=1, bias=False),
+            torch.nn.ReLU(),      
+            torch.nn.MaxPool2d(2, stride=2))
+ 
+        self.L3 = torch.nn.Sequential(torch.nn.Conv2d(64, 64, 1, stride, padding=1, bias=False),
+            torch.nn.Conv2d(64, 128, 3, stride, padding=1, bias=False),
+            torch.nn.Conv2d(128, 128, 1, stride, padding=1, bias=False),
+            torch.nn.ReLU(),     
+            torch.nn.MaxPool2d(2, stride=2))
+        
+        self.L4 = torch.nn.Sequential(torch.nn.Conv2d(128, 128, 1, stride, padding=1, bias=False),
+            torch.nn.Conv2d(128, 256, 3, stride, padding=1, bias=False),
+            torch.nn.Conv2d(256, 256, 1, stride, padding=1, bias=False),
+            torch.nn.ReLU(),     
+            torch.nn.MaxPool2d(2, stride=2))
+        
+        self.L5 = torch.nn.Sequential(torch.nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=2),
+            torch.nn.ReLU())
+        
+        self.L6 = torch.nn.Sequential(torch.nn.ConvTranspose2d(256, 64, kernel_size=3, stride=2, padding=2),
+            torch.nn.ReLU()) 
+        
+        self.L7 = torch.nn.Sequential(torch.nn.ConvTranspose2d(128, 32, kernel_size=3, stride=2 ,padding=2),
+            torch.nn.ReLU())
+        
+        self.L8 = torch.nn.Sequential(torch.nn.ConvTranspose2d(64, 5, kernel_size=3, stride=2 ,padding=2),
+            torch.nn.Conv2d(32, 5, 1, stride, padding=1, bias=False),
+            torch.nn.ReLU())
+           
+
 
         if stride != 1 or l != c:
             self.downsample = torch.nn.Sequential(torch.nn.Conv2d(c, l, 1),torch.nn.BatchNorm2d(l))
@@ -79,11 +91,19 @@ class FCN(torch.nn.Module):
               if required (use z = z[:, :, :H, :W], where H and W are the height and width of a corresponding strided
               convolution
         """
-        z = self.network(x)
+        layer1 = self.L1(x)  
+        layer2 = self.L2(layer1)
+        layer3 = self.L3(layer2)
+        layer4 = self.L4(layer3)
+        layer5 = self.L5(layer4)
+        skip_1 = torch.cat([layer5, layer3], dim=1)
+        layer6 = self.L6(skip_1)
+        skip_2 = torch.cat([layer6, layer2], dim=1)
+        layer7 = self.L7(skip_2)
+        skip_3 = torch.cat([layer7, layer1], dim=1)
+        z = self.L8(skip_3)
         z = z[:,:,:x.shape[2],:x.shape[3]]
-        tag_scores = F.log_softmax(z, dim=1)
-        return tag_scores 
-
+        return z 
 
         
 model_factory = {
