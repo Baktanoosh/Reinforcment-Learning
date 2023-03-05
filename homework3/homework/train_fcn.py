@@ -27,6 +27,7 @@ def train(args):
     valid_data = load_dense_data('dense_data/valid')
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max')
     global_step = 0    
     for epoch in range(num_epochs):
         model.train()
@@ -41,7 +42,6 @@ def train(args):
             loss_val.backward()
             optimizer.step()
             global_step += 1
-
         print("------------------------------------------------------------")
         print('Epoch: ', epoch+1)
         print('Accuracy = ',confusion_matrix.average_accuracy)
@@ -55,6 +55,7 @@ def train(args):
             print("------------------------------------------------------------")
             print('Average_Accuracy = ',confusion_matrix.average_accuracy)
             print('Intersection over Union  = ',confusion_matrix.iou)
+        scheduler.step(confusion_matrix.iou)
     save_model(model)
 
 
