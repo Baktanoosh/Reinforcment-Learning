@@ -16,14 +16,15 @@ def train(args):
     Hint: If you found a good data augmentation parameters for the CNN, use them here too. Use dense_transforms
     Hint: Use the log function below to debug and visualize your model
     """
-    num_epochs = 25
+    num_epochs = 10
     learning_rate = 0.001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
-    transform = dense_transforms.Compose((dense_transforms.ColorJitter(0.4701, 0.4308, 0.3839), 
+    transform = dense_transforms.Compose((dense_transforms.ColorJitter(0.3, 0.3, 0.3), 
                   dense_transforms.RandomHorizontalFlip(), dense_transforms.RandomCrop(96), dense_transforms.ToTensor()))
-    train_data = load_dense_data('dense_data/train', transform=transform)
+    train_data = load_dense_data('dense_data/train')
+    train_data_transformed = load_dense_data('dense_data/train', transform=transform)
     valid_data = load_dense_data('dense_data/valid')
     loss = torch.nn.CrossEntropyLoss()   
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -33,6 +34,16 @@ def train(args):
         model.train()
         confusion_matrix = ConfusionMatrix()
         for image, label in train_data:
+            image = image.to(device)
+            label = torch.tensor(label, dtype=torch.long, device=device)
+            pred = model(image)
+            loss_val = loss(pred, label)
+            confusion_matrix.add(pred.argmax(1), label)
+            optimizer.zero_grad()
+            loss_val.backward()
+            optimizer.step()
+            global_step += 1
+        for image, label in train_data_transformed:
             image = image.to(device)
             label = torch.tensor(label, dtype=torch.long, device=device)
             pred = model(image)
