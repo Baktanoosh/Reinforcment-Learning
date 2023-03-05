@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-
+from . import dense_transforms
         
 class CNNClassifier(torch.nn.Module):
     def __init__(self, layers=[64,128,256,512], input_channels=3, kernel_size=3):
@@ -38,45 +38,33 @@ class FCN(torch.nn.Module):
         stride = 1
         kernel_size = 3
         
-        self.L1 = torch.nn.Sequential(torch.nn.Conv2d(3, 3, 1, stride, padding=1, bias=False),
-            torch.nn.Conv2d(3, 32, 3, stride, padding=1, bias=False),
-            torch.nn.Conv2d(32, 32, 1, stride, padding=1, bias=False),
-            torch.nn.ReLU(),      
-            torch.nn.MaxPool2d(2, stride=2))
+        self.L1 = torch.nn.Sequential(torch.nn.Conv2d(c, 32, kernel_size=5, stride=1, padding=2, bias=False),
+            torch.nn.BatchNorm2d(32), torch.nn.MaxPool2d(kernel_size=2, stride=1, padding=1), torch.nn.ReLU())
 
-        self.L2 = torch.nn.Sequential(torch.nn.Conv2d(32, 32, 1, stride, padding=1, bias=False),
-            torch.nn.Conv2d(32, 64, 3, stride, padding=1, bias=False),
-            torch.nn.Conv2d(64, 64, 1, stride, padding=1, bias=False),
-            torch.nn.ReLU(),      
-            torch.nn.MaxPool2d(2, stride=2))
+        self.L2 =  torch.nn.Sequential(torch.nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1, bias=False),
+            torch.nn.BatchNorm2d(64), torch.nn.ReLU())
  
-        self.L3 = torch.nn.Sequential(torch.nn.Conv2d(64, 64, 1, stride, padding=1, bias=False),
-            torch.nn.Conv2d(64, 128, 3, stride, padding=1, bias=False),
-            torch.nn.Conv2d(128, 128, 1, stride, padding=1, bias=False),
-            torch.nn.ReLU(),     
-            torch.nn.MaxPool2d(2, stride=2))
+        self.L3 =  torch.nn.Sequential(torch.nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False),
+            torch.nn.BatchNorm2d(128), torch.nn.ReLU())
         
-        self.L4 = torch.nn.Sequential(torch.nn.Conv2d(128, 128, 1, stride, padding=1, bias=False),
-            torch.nn.Conv2d(128, 256, 3, stride, padding=1, bias=False),
-            torch.nn.Conv2d(256, 256, 1, stride, padding=1, bias=False),
-            torch.nn.ReLU(),     
-            torch.nn.MaxPool2d(2, stride=2))
+        self.L4 =  torch.nn.Sequential(torch.nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1, bias=False),
+            torch.nn.BatchNorm2d(256), torch.nn.ReLU())
         
-        self.L5 = torch.nn.Sequential(torch.nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=2),
-            torch.nn.ReLU())
+        self.L5 = torch.nn.Sequential(torch.nn.ConvTranspose2d(256, 128, kernel_size=3, stride=1, padding=1, bias=False),
+            torch.nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=False),      
+            torch.nn.BatchNorm2d(128), torch.nn.ReLU())
         
-        self.L6 = torch.nn.Sequential(torch.nn.ConvTranspose2d(256, 64, kernel_size=3, stride=2, padding=2),
-            torch.nn.ReLU()) 
+        self.L6 = torch.nn.Sequential(torch.nn.ConvTranspose2d(256, 64, kernel_size=3, stride=1, padding=1, bias=False),
+            torch.nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False),
+            torch.nn.BatchNorm2d(64), torch.nn.ReLU())
         
-        self.L7 = torch.nn.Sequential(torch.nn.ConvTranspose2d(128, 32, kernel_size=3, stride=2 ,padding=2),
-            torch.nn.ReLU())
+        self.L7 = torch.nn.Sequential(torch.nn.ConvTranspose2d(128, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            torch.nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            torch.nn.BatchNorm2d(32), torch.nn.ReLU())
         
-        self.L8 = torch.nn.Sequential(torch.nn.ConvTranspose2d(64, 5, kernel_size=3, stride=2 ,padding=2),
-            torch.nn.Conv2d(32, 5, 1, stride, padding=1, bias=False),
-            torch.nn.ReLU())
-           
-
-
+        self.L8 = torch.nn.Sequential(torch.nn.ConvTranspose2d(64, 5, kernel_size=3, stride=1 ,padding=1, bias=False),
+            torch.nn.BatchNorm2d(5), torch.nn.ReLU())
+        
         if stride != 1 or l != c:
             self.downsample = torch.nn.Sequential(torch.nn.Conv2d(c, l, 1),torch.nn.BatchNorm2d(l))
 
@@ -91,16 +79,26 @@ class FCN(torch.nn.Module):
               if required (use z = z[:, :, :H, :W], where H and W are the height and width of a corresponding strided
               convolution
         """
-        layer1 = self.L1(x)  
+        layer1 = self.L1(x)
+        print('layer1 ', layer1.shape)  
         layer2 = self.L2(layer1)
+        print('layer2 ', layer2.shape)  
         layer3 = self.L3(layer2)
+        print('layer3 ', layer3.shape)  
         layer4 = self.L4(layer3)
+        print('layer4 ', layer4.shape)  
         layer5 = self.L5(layer4)
+        print('layer5 ', layer5.shape)  
         skip_1 = torch.cat([layer5, layer3], dim=1)
+        print('skip1 ', skip_1.shape)  
         layer6 = self.L6(skip_1)
+        print('layer6 ', layer6.shape)  
         skip_2 = torch.cat([layer6, layer2], dim=1)
+        print('skip2 ', skip_2.shape)  
         layer7 = self.L7(skip_2)
+        print('layer7 ', layer7.shape) 
         skip_3 = torch.cat([layer7, layer1], dim=1)
+        print('skip3 ', skip_3.shape)  
         z = self.L8(skip_3)
         z = z[:,:,:x.shape[2],:x.shape[3]]
         return z 
