@@ -40,26 +40,19 @@ class FCN(torch.nn.Module):
         
         self.L1 = torch.nn.Sequential(torch.nn.Conv2d(input_channels, 32, kernel_size=3, stride=2, padding=1),
             torch.nn.BatchNorm2d(32),torch.nn.Dropout(p=0.25),torch.nn.ReLU())
-        self.skip1 = torch.nn.ConvTranspose2d(32, 64, kernel_size=3, stride=1 ,padding=1)
         self.L2 = torch.nn.Sequential(torch.nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
             torch.nn.BatchNorm2d(64),torch.nn.Dropout(p=0.25),torch.nn.ReLU())
-        self.skip2 = torch.nn.ConvTranspose2d(64, 128, kernel_size=3, stride=1 ,padding=1)
         self.L3 = torch.nn.Sequential(torch.nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
             torch.nn.BatchNorm2d(128),torch.nn.Dropout(p=0.25),torch.nn.ReLU())
-        self.skip3 = torch.nn.ConvTranspose2d(128, 256, kernel_size=3, stride=1 ,padding=1)
         self.L4 = torch.nn.Sequential(torch.nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
             torch.nn.BatchNorm2d(256),torch.nn.Dropout(p=0.25),torch.nn.ReLU())
-        self.skip4 = torch.nn.ConvTranspose2d(256, 128, kernel_size=3, stride=1 ,padding=1)
         self.L5 = torch.nn.Sequential(torch.nn.ConvTranspose2d(256, 128, kernel_size=3, stride=1, padding=1),
             torch.nn.BatchNorm2d(128),torch.nn.Dropout(p=0.25),torch.nn.ReLU())
-        self.skip5 = torch.nn.ConvTranspose2d(128, 64, kernel_size=3, stride=1 ,padding=1)
-        self.L6 = torch.nn.Sequential(torch.nn.ConvTranspose2d(256, 64, kernel_size=3, stride=1, padding=1),
+        self.L6 = torch.nn.Sequential(torch.nn.ConvTranspose2d(128, 64, kernel_size=3, stride=1, padding=1),
             torch.nn.BatchNorm2d(64),torch.nn.Dropout(p=0.25),torch.nn.ReLU())
-        self.skip6 = torch.nn.ConvTranspose2d(64, 32, kernel_size=3, stride=1 ,padding=1)
-        self.L7 = torch.nn.Sequential(torch.nn.ConvTranspose2d(128, 32, kernel_size=3, stride=1, padding=1),
+        self.L7 = torch.nn.Sequential(torch.nn.ConvTranspose2d(64, 32, kernel_size=3, stride=1, padding=1),
             torch.nn.BatchNorm2d(32),torch.nn.Dropout(p=0.25),torch.nn.ReLU())
-        self.skip7 = torch.nn.ConvTranspose2d(3, 5, kernel_size=3, stride=1 ,padding=1)
-        self.L8 = torch.nn.Sequential(torch.nn.ConvTranspose2d(64, 5, kernel_size=4, stride=2 ,padding=1),
+        self.L8 = torch.nn.Sequential(torch.nn.ConvTranspose2d(32, 5, kernel_size=4, stride=2 ,padding=1),
             torch.nn.BatchNorm2d(5),torch.nn.Dropout(p=0.25),torch.nn.ReLU())
         
         if stride != 1 or l != c:
@@ -78,22 +71,12 @@ class FCN(torch.nn.Module):
         """
         layer1 = self.L1(x)         
         layer2 = self.L2(layer1)   
-        layer2 = layer2 + self.skip1(layer1)
         layer3 = self.L3(layer2)
-        layer3 = layer3 + self.skip2(layer2)
         layer4 = self.L4(layer3)
-        layer4 = layer4 + self.skip3(layer3)
         layer5 = self.L5(layer4)
-        layer5 = layer5 + self.skip4(layer4)
-        skip1 = torch.cat([layer5, layer3], dim=1)
-        layer6 = self.L6(skip1)
-        layer6 = layer6 + self.skip5(layer5)
-        skip2 = torch.cat([layer6, layer2], dim=1)
-        layer7 = self.L7(skip2)       
-        layer7 = layer7 + self.skip6(layer6)
-        skip3 = torch.cat([layer7, layer1], dim=1)   
-        layer8 = self.L8(skip3)
-        z = layer8 + self.skip7(x)
+        layer6 = self.L6(layer5)
+        layer7 = self.L7(layer6)       
+        z = self.L8(layer7)
         z = z[:,:,:x.shape[2],:x.shape[3]]
         return z 
 
