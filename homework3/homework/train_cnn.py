@@ -14,7 +14,7 @@ def train(args):
     if args.log_dir is not None:
         train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'), flush_secs=1)
         valid_logger = tb.SummaryWriter(path.join(args.log_dir, 'valid'), flush_secs=1)
-  
+    transform = trans.Compose((trans.ToPILImage(), trans.ColorJitter(0.4701, 0.4308, 0.3839), trans.RandomHorizontalFlip(), trans.ToTensor()))
     train_path = "/content/cs342/homework3/data/train"
     valid_path = "/content/cs342/homework3/data/valid"
     num_epochs = 50
@@ -26,6 +26,7 @@ def train(args):
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
     train_data = load_data(train_path)
+    train_data_transformed = load_data(train_path, transform=transform)
     valid_data = load_data(valid_path)
     global_step = 0
     for epoch in range(num_epochs):
@@ -37,6 +38,14 @@ def train(args):
         valid_accuracy = []
         valid_accuracy_value = []
         for i, (data, labels) in enumerate(train_data):
+            o = model(data.to(device))
+            train_loss = loss(o, labels.to(device))
+            train_loss_value.append(train_loss.float().detach().cpu().numpy())
+            optimizer.zero_grad()
+            train_loss.backward()
+            optimizer.step()
+            global_step += 1
+        for i, (data, labels) in enumerate(train_data_transformed):
             o = model(data.to(device))
             train_loss = loss(o, labels.to(device))
             train_loss_value.append(train_loss.float().detach().cpu().numpy())
