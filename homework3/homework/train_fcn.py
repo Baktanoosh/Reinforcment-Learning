@@ -16,12 +16,12 @@ def train(args):
     Hint: If you found a good data augmentation parameters for the CNN, use them here too. Use dense_transforms
     Hint: Use the log function below to debug and visualize your model
     """
-    num_epochs = 10
+    num_epochs = 25
     learning_rate = 0.001
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('device = ', device)
     model.to(device)
-    transform = dense_transforms.Compose((dense_transforms.ColorJitter(0.3, 0.3, 0.3), 
+    transform = dense_transforms.Compose((dense_transforms.ColorJitter(0.4701, 0.4308, 0.3839), 
                   dense_transforms.RandomHorizontalFlip(), dense_transforms.RandomCrop(96), dense_transforms.ToTensor()))
     train_data = load_dense_data('dense_data/train')
     train_data_transformed = load_dense_data('dense_data/train', transform=transform)
