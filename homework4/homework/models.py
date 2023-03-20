@@ -12,21 +12,21 @@ def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
        @return: List of peaks [(score, cx, cy), ...], where cx, cy are the position of a peak and score is the
                 heatmap value at the peak. Return no more than max_det peaks per image
     """
-    values = []
-    peak = []
-    pool = F.max_pool2d(heatmap[None, None], kernel_size = max_pool_ks, padding=max_pool_ks // 2, stride=1)[0, 0]
+    result = []
+    pool = F.max_pool2d(heatmap[None, None], kernel_size=max_pool_ks, padding=max_pool_ks // 2, stride=1)[0, 0]
     peak = heatmap - (pool > heatmap).float() * 1e5
-    len_peak = (heatmap - (pool > heatmap).float() * 1e5).numel()
+    len_peak = peak.numel()
     if max_det > len_peak:
         max_det = len_peak
-    score, value = torch.topk(peak.view(-1), max_det)
-    for peak_score, dim in zip(score.cpu(), value.cpu()):
-        if peak_score > min_score :
-            values.append(float(peak_score))
-            values.append(int(dim) % heatmap.size(1))
-            values.append(int(dim) //heatmap.size(1))
-            peak.append(tuple(values))
-    return peak
+    score, indices = torch.topk(peak.view(-1), max_det)
+    for i in range(max_det):
+        dim = indices[i]
+        peak_score = score[i]
+        if peak_score > min_score:
+            cx = dim % heatmap.size(1)
+            cy = dim // heatmap.size(1)
+            result.append((float(peak_score), int(cx), int(cy)))
+    return result
    
 
 class Detector(torch.nn.Module):
