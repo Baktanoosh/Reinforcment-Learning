@@ -27,13 +27,13 @@ def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
             values.append(int(dim) //heatmap.size(1))
             peak.append(tuple(values))
     return peak
+   
 
-class CNNClassifier(torch.nn.Module):
+class Detector(torch.nn.Module):
     class Block(torch.nn.Module):
         def __init__(self, n_input, n_output, kernel_size=3, stride=2):
             super().__init__()
-            self.c1 = torch.nn.Conv2d(n_input, n_output, kernel_size=kernel_size, padding=kernel_size // 2,
-                                      stride=stride, bias=False)
+            self.c1 = torch.nn.Conv2d(n_input, n_output, kernel_size=kernel_size, padding=kernel_size // 2, stride=stride, bias=False)
             self.c2 = torch.nn.Conv2d(n_output, n_output, kernel_size=kernel_size, padding=kernel_size // 2, bias=False)
             self.c3 = torch.nn.Conv2d(n_output, n_output, kernel_size=kernel_size, padding=kernel_size // 2, bias=False)
             self.b1 = torch.nn.BatchNorm2d(n_output)
@@ -48,7 +48,6 @@ class CNNClassifier(torch.nn.Module):
         super().__init__()
         self.input_mean = torch.Tensor([0.3235, 0.3310, 0.3445])
         self.input_std = torch.Tensor([0.2533, 0.2224, 0.2483])
-
         L = []
         c = 3
         for l in layers:
@@ -64,19 +63,14 @@ class CNNClassifier(torch.nn.Module):
     class UpBlock(torch.nn.Module):
         def __init__(self, n_input, n_output, kernel_size=3, stride=2):
             super().__init__()
-            self.c1 = torch.nn.ConvTranspose2d(n_input, n_output, kernel_size=kernel_size, padding=kernel_size // 2,
-                                      stride=stride, output_padding=1)
+            self.c1 = torch.nn.ConvTranspose2d(n_input, n_output, kernel_size=kernel_size, padding=kernel_size // 2, stride=stride, output_padding=1)
 
         def forward(self, x):
             return F.relu(self.c1(x))
-    
-
-class Detector(torch.nn.Module):
     def __init__(self, layers=[16, 32, 64, 128], n_output_channels=3, kernel_size=3, use_skip=True):
         super().__init__()
         self.input_mean = torch.Tensor([0.2788, 0.2657, 0.2629])
         self.input_std = torch.Tensor([0.2064, 0.1944, 0.2252])
-
         c = 3
         self.use_skip = use_skip
         self.n_conv = len(layers)
