@@ -14,7 +14,7 @@ class FocalLoss(torch.nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(FocalLoss, self).__init__()
 
-    def forward(self, inputs, targets, alpha=0.8, gamma=0, smooth=1):
+    def forward(self, inputs, targets, alpha=0.25, gamma=2, smooth=1):
         #comment out if your model contains a sigmoid or equivalent activation layer
         inputs = F.sigmoid(inputs)       
         inputs = inputs.view(-1)
@@ -42,7 +42,6 @@ def train(args):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model = Detector().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
-    loss = torch.nn.BCEWithLogitsLoss().to(device)
     transform = eval(args.transform, {k: v for k, v in inspect.getmembers(dense_transforms) if inspect.isclass(v)})
     train_data = load_detection_data('dense_data/train', num_workers=4, transform=transform)
     for epoch in range(num_epoch):
