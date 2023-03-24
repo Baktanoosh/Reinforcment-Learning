@@ -123,7 +123,7 @@ class Detector(torch.nn.Module):
             peaks = extract_peak(heatmap, max_pool_ks=11, max_det=15)
             for peak in peaks:
                 peak_tuple = (*peak, 0, 0)
-                peak_list.append(peak_tuple)
+                peak_array.append(peak_tuple)
             detect_out.append(peak_array)
         return detect_out
 
