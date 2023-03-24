@@ -29,18 +29,20 @@ def train(args):
     transform = eval(args.transform, {k: v for k, v in inspect.getmembers(dense_transforms) if inspect.isclass(v)})
     train_data = load_detection_data('dense_data/train', num_workers=4, transform=transform)
     for epoch in range(num_epoch):
+        loss_array =[]
         model.train()
         for img, label,_ in train_data:
             img, label = img.to(device), label.to(device)
             logit = model(img)
             loss_val = loss(logit, label)
+            loss_array.append(float(loss_val))
             optimizer.zero_grad()
             loss_val.backward()
             optimizer.step()
             global_step += 1
         print("------------------------------------------------------------")
         print("Epoch: " + str(epoch+1))
-        print("Loss: ",loss_val)   
+        print("Loss: " + "{0:.4f}".format( np.mean(loss_array)))
     save_model(model)
 
 
