@@ -117,15 +117,15 @@ class Detector(torch.nn.Module):
                  out of memory.
         """
         
-        detect_result = []
+        detect_out = []
         for heatmap in self(image[None]).squeeze(0):
+            peak_array = []
             peaks = extract_peak(heatmap, max_pool_ks=11, max_det=15)
-            peak_list = []
             for peak in peaks:
                 peak_tuple = (*peak, 0, 0)
                 peak_list.append(peak_tuple)
-            detect_result.append(peak_list)
-        return detect_result
+            detect_out.append(peak_array)
+        return detect_out
 
 
 
