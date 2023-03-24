@@ -6,7 +6,23 @@ from .models import Detector, save_model
 from .utils import load_detection_data
 from . import dense_transforms
 import torch.utils.tensorboard as tb
+import torch.nn.functional as F
 
+
+
+class FocalLoss(torch.nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(FocalLoss, self).__init__()
+
+    def forward(self, inputs, targets, alpha=0.8, gamma=0, smooth=1):
+        #comment out if your model contains a sigmoid or equivalent activation layer
+        inputs = F.sigmoid(inputs)       
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+        BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
+        BCE_EXP = torch.exp(-BCE)
+        focal_loss = alpha * (1-BCE_EXP)**gamma * BCE
+        return focal_loss
 
 def train(args):
     from os import path
@@ -21,6 +37,7 @@ def train(args):
     """
     global_step = 0
     num_epoch = 20
+    FL = FocalLoss()
     learning_rate = 1e-3 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model = Detector().to(device)
@@ -34,15 +51,15 @@ def train(args):
         for img, label,_ in train_data:
             img, label = img.to(device), label.to(device)
             logit = model(img)
-            loss_val = loss(logit, label)
-            loss_array.append(float(loss_val))
+            loss_val = FL.forward(logit, label)
+            loss_array.append(loss_val.cpu().detach().numpy())
             optimizer.zero_grad()
             loss_val.backward()
             optimizer.step()
             global_step += 1
         print("------------------------------------------------------------")
         print("Epoch: " + str(epoch+1))
-        print("Loss: " + "{0:.4f}".format( np.mean(loss_array)))
+        print("Loss: " + "{0:.4f}".format(np.mean(loss_array)))
     save_model(model)
 
 
@@ -68,3 +85,4 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--transform', default='Compose([ColorJitter(0.9, 0.9, 0.9, 0.1), RandomHorizontalFlip(), ToTensor(), ToHeatmap()])')
     args = parser.parse_args()
     train(args)
+
