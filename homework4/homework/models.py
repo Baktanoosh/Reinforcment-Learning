@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
+
 def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
     """
        Your code here.
@@ -13,18 +14,18 @@ def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
                 heatmap value at the peak. Return no more than max_det peaks per image
     """
     result = []
-    pool = F.max_pool2d(heatmap[None, None], kernel_size=max_pool_ks, padding=max_pool_ks // 2, stride=1)[0, 0]
+    pool = torch.nn.functional.max_pool2d(heatmap[None, None], kernel_size=max_pool_ks, padding=max_pool_ks // 2, stride=1)[0, 0]
     peak = heatmap - (pool > heatmap).float() * 1e5
     len_peak = peak.numel()
     if max_det > len_peak:
         max_det = len_peak
     score, indices = torch.topk(peak.view(-1), max_det)
     for i in range(max_det):
-        dim = indices[i]
         peak_score = score[i]
         if peak_score > min_score:
-            cx = dim % heatmap.size(1)
-            cy = dim // heatmap.size(1)
+            peak_indices = torch.where(heatmap.cpu() == peak_score.cpu())
+            cx = peak_indices[1][0].item()
+            cy = peak_indices[0][0].item()
             result.append((float(peak_score), int(cx), int(cy)))
     return result
    
@@ -103,40 +104,46 @@ class Detector(torch.nn.Module):
         return self.classifier(z)
    
     
-    def detect(self, image):
-        """
-           Your code here.
-           Implement object detection here.
-           @image: 3 x H x W image
-           @return: Three list of detections [(score, cx, cy, w/2, h/2), ...], one per class,
-                    return no more than 30 detections per image per class. You only need to predict width and height
-                    for extra credit. If you do not predict an object size, return w=0, h=0.
-           Hint: Use extract_peak here
-           Hint: Make sure to return three python lists of tuples of (float, int, int, float, float) and not a pytorch
-                 scalar. Otherwise pytorch might keep a computation graph in the background and your program will run
-                 out of memory.
-        """
-        
-        detect_out = []
-        for heatmap in self(image[None]).squeeze(0):
-            peak_array = []
-            peaks = extract_peak(heatmap, max_pool_ks=11, max_det=15)
-            for p in peaks:
-                score, cx, cy = p
-                w, h = 0, 0
-                window_size = 5
-                threshold = 0.5
-                heatmap_window = heatmap[max(cy-window_size, 0):cy+window_size+1, max(cx-window_size, 0):cx+window_size+1]
-                y_ind, x_ind = np.where(heatmap_window >= threshold)
-                if len(x_ind) > 0:
-                    x_min, x_max = np.min(x_ind), np.max(x_ind)
-                    y_min, y_max = np.min(y_ind), np.max(y_ind)
-                    w = (x_max - x_min + 1) / 2.0
-                    h = (y_max - y_min + 1) / 2.0
-                peak_tuple = (score, cx, cy, w, h)
-                peak_array.append(peak_tuple)
-            detect_out.append(peak_array)
-        return detect_out
+    
+def detect(self, image):
+    """
+       Your code here.
+       Implement object detection here.
+       @image: 3 x H x W image
+       @return: Three list of detections [(score, cx, cy, w/2, h/2), ...], one per class,
+                return no more than 30 detections per image per class. You only need to predict width and height
+                for extra credit. If you do not predict an object size, return w=0, h=0.
+       Hint: Use extract_peak here
+       Hint: Make sure to return three python lists of tuples of (float, int, int, float, float) and not a pytorch
+             scalar. Otherwise pytorch might keep a computation graph in the background and your program will run
+             out of memory.
+    """
+
+    detect_out = []
+    for heatmap in self(image[None]).squeeze(0):
+        peak_array = []
+        peaks = extract_peak(heatmap.cpu(), max_pool_ks=11, max_det=15)
+        for p in peaks:
+            score, cx, cy = p
+            w, h = 0, 0
+            window_size = 6
+            threshold = 0.5
+            heatmap_window = heatmap[max(cy-window_size, 0):cy+window_size+1, max(cx-window_size, 0):cx+window_size+1]
+            heatmap_window_np = heatmap_window.cpu().detach().numpy()
+            y_ind, x_ind = np.where(heatmap_window_np >= threshold)
+            if len(x_ind) > 0:
+                x_min, x_max = np.min(x_ind), np.max(x_ind)
+                y_min, y_max = np.min(y_ind), np.max(y_ind)
+                w = (x_max - x_min + 1) 
+                h = (y_max - y_min + 1)
+            peak_tuple = (score, cx, cy, w/2, h/2)
+            peak_array.append(peak_tuple)
+        peak_array = sorted(peak_array, key=lambda x: x[0], reverse=True)
+        peak_array = peak_array[:30]
+        detect_out.append(peak_array)
+    return detect_out
+
+
 
 
 def save_model(model):
