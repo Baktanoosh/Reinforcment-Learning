@@ -40,10 +40,11 @@ def train(args):
     global_step = 0
     num_epoch = 20
     FL = FocalLoss()
-    learning_rate = 1e-3 
+    learning_rate = 1e-2
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model = Detector().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
     loss = torch.nn.BCEWithLogitsLoss().to(device)
     transform = eval(args.transform, {k: v for k, v in inspect.getmembers(dense_transforms) if inspect.isclass(v)})
     train_data = load_detection_data('dense_data/train', num_workers=4, transform=transform)
@@ -59,6 +60,7 @@ def train(args):
             loss_val.backward()
             optimizer.step()
             global_step += 1
+        scheduler.step()
         print("------------------------------------------------------------")
         print("Epoch: " + str(epoch+1))
         print("Loss: " + "{0:.4f}".format(np.mean(loss_array)))
