@@ -14,7 +14,7 @@ class FocalLoss(torch.nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(FocalLoss, self).__init__()
 
-    def forward(self, inputs, targets, alpha=0.8, gamma=0, smooth=1):
+    def forward(self, inputs, targets, alpha=0.8, gamma=0, smooth=1, iou_lambda=0.1):
         #comment out if your model contains a sigmoid or equivalent activation layer
         inputs = F.sigmoid(inputs)       
         inputs = inputs.view(-1)
@@ -22,7 +22,9 @@ class FocalLoss(torch.nn.Module):
         BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
         BCE_EXP = torch.exp(-BCE)
         focal_loss = alpha * (1-BCE_EXP)**gamma * BCE
-        return focal_loss
+        iou_loss = iou_lambda * (1 - torch.sum(inputs * targets) / torch.sum(inputs + targets - inputs * targets + smooth))
+        return focal_loss + iou_loss
+
 
 def train(args):
     from os import path
