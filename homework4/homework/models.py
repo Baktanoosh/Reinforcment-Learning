@@ -1,11 +1,10 @@
 import torch
-import numpy as np
+import numpy as np     
 import torch.nn.functional as F
 
 
 def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
     """
-       Your code here.
        Extract local maxima (peaks) in a 2d heatmap.
        @heatmap: H x W heatmap containing peaks (similar to your training heatmap)
        @max_pool_ks: Only return points that are larger than a max_pool_ks x max_pool_ks window around the point
@@ -20,14 +19,19 @@ def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
     if max_det > len_peak:
         max_det = len_peak
     score, indices = torch.topk(peak.view(-1), max_det)
+    prev_peaks = set()
     for i in range(max_det):
         dim = indices[i]
         peak_score = score[i]
         if peak_score > min_score:
             cx = dim % heatmap.size(1)
             cy = dim // heatmap.size(1)
-            result.append((float(peak_score), int(cx), int(cy)))
+            peak_coords = (cx, cy)
+            if peak_coords not in prev_peaks:
+                prev_peaks.add(peak_coords)
+                result.append((float(peak_score), int(cx), int(cy)))
     return result
+
    
 
 class Detector(torch.nn.Module):
@@ -45,7 +49,7 @@ class Detector(torch.nn.Module):
         def forward(self, x):
             return F.relu(self.b3(self.c3(F.relu(self.b2(self.c2(F.relu(self.b1(self.c1(x)))))))) + self.skip(x))
 
-    def __init__(self, layers=[16, 32, 64, 128], n_output_channels=6, kernel_size=3):
+    def __init__(self, layers=[16, 32, 64, 256, 512], n_output_channels=6, kernel_size=3):
         super().__init__()
         self.input_mean = torch.Tensor([0.3235, 0.3310, 0.3445])
         self.input_std = torch.Tensor([0.2533, 0.2224, 0.2483])
@@ -189,3 +193,4 @@ if __name__ == '__main__':
                 ax.add_patch(patches.Circle((cx, cy), radius=max(2 + s / 2, 0.1), color='rgb'[c]))
         ax.axis('off')
     show()
+
