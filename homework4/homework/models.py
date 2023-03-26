@@ -127,10 +127,10 @@ class Detector(torch.nn.Module):
                 window_size = 5
                 threshold = 0.5
                 heatmap_window = heatmap[max(cy-window_size, 0):cy+window_size+1, max(cx-window_size, 0):cx+window_size+1]
-                y_indices, x_indices = np.where(heatmap_window >= threshold)
-                if len(x_indices) > 0:
-                    x_min, x_max = np.min(x_indices), np.max(x_indices)
-                    y_min, y_max = np.min(y_indices), np.max(y_indices)
+                y_ind, x_ind = np.where(heatmap_window >= threshold)
+                if len(x_ind) > 0:
+                    x_min, x_max = np.min(x_ind), np.max(x_ind)
+                    y_min, y_max = np.min(y_ind), np.max(y_ind)
                     w = (x_max - x_min + 1) / 2.0
                     h = (y_max - y_min + 1) / 2.0
                 peak_tuple = (score, cx, cy, w, h)
