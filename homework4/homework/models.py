@@ -1,23 +1,17 @@
 import torch
 import torch.nn.functional as F
-import numpy as np
 
-    
+
 def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
     """
-    Extract local maxima (peaks) in a 2D heatmap.
-
-    Args:
-    - heatmap: H x W tensor containing peaks (similar to your training heatmap)
-    - max_pool_ks: Only return points that are larger than a max_pool_ks x max_pool_ks window around the point
-    - min_score: Only return peaks greater than min_score
-    - max_det: Maximum number of peaks to return
-
-    Returns:
-    - List of peaks [(score, cx, cy), ...], where cx, cy are the position of a peak and score is the
-      heatmap value at the peak. Return no more than max_det peaks per image
+       Your code here.
+       Extract local maxima (peaks) in a 2d heatmap.
+       @heatmap: H x W heatmap containing peaks (similar to your training heatmap)
+       @max_pool_ks: Only return points that are larger than a max_pool_ks x max_pool_ks window around the point
+       @min_score: Only return peaks greater than min_score
+       @return: List of peaks [(score, cx, cy), ...], where cx, cy are the position of a peak and score is the
+                heatmap value at the peak. Return no more than max_det peaks per image
     """
-    
     result = []
     pool = F.max_pool2d(heatmap[None, None], kernel_size=max_pool_ks, padding=max_pool_ks // 2, stride=1)[0, 0]
     peak = heatmap - (pool > heatmap).float() * 1e5
@@ -33,9 +27,8 @@ def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
             cy = dim // heatmap.size(1)
             result.append((float(peak_score), int(cx), int(cy)))
     return result
+   
 
-
-     
 class Detector(torch.nn.Module):
     class Block(torch.nn.Module):
         def __init__(self, n_input, n_output, kernel_size=3, stride=2):
@@ -108,22 +101,21 @@ class Detector(torch.nn.Module):
             if self.use_skip:
                 z = torch.cat([z, up_activation[i]], dim=1)
         return self.classifier(z)
-        
-        
+   
+    
     def detect(self, image):
         """
-        Your code here.
-        Implement object detection here.
-        @image: 3 x H x W image
-        @return: Three list of detections [(score, cx, cy, w/2, h/2), ...], one per class,
+           Your code here.
+           Implement object detection here.
+           @image: 3 x H x W image
+           @return: Three list of detections [(score, cx, cy, w/2, h/2), ...], one per class,
                     return no more than 30 detections per image per class. You only need to predict width and height
                     for extra credit. If you do not predict an object size, return w=0, h=0.
-        Hint: Use extract_peak here
-        Hint: Make sure to return three python lists of tuples of (float, int, int, float, float) and not a pytorch
-                scalar. Otherwise pytorch might keep a computation graph in the background and your program will run
-                out of memory.
+           Hint: Use extract_peak here
+           Hint: Make sure to return three python lists of tuples of (float, int, int, float, float) and not a pytorch
+                 scalar. Otherwise pytorch might keep a computation graph in the background and your program will run
+                 out of memory.
         """
-
         detect_out = []
         model = self.to('cuda')
         for heatmap in model(image[None].cuda()).squeeze(0):
@@ -148,7 +140,6 @@ class Detector(torch.nn.Module):
             peak_array = peak_array[:30]
             detect_out.append(peak_array)
         return detect_out
-
 
 
 
