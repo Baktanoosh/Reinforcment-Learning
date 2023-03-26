@@ -193,4 +193,3 @@ if __name__ == '__main__':
                 ax.add_patch(patches.Circle((cx, cy), radius=max(2 + s / 2, 0.1), color='rgb'[c]))
         ax.axis('off')
     show()
-
