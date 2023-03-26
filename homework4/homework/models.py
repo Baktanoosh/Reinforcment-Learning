@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-
+import numpy as np
 
 def extract_peak(heatmap, max_pool_ks=7, min_score=-5, max_det=100):
     """
@@ -121,8 +121,8 @@ class Detector(torch.nn.Module):
         for heatmap in self(image[None]).squeeze(0):
             peak_array = []
             peaks = extract_peak(heatmap, max_pool_ks=11, max_det=15)
-            for peak in peaks:
-                score, cx, cy = peak
+            for p in peaks:
+                score, cx, cy = p
                 w, h = 0, 0
                 window_size = 5
                 threshold = 0.5
@@ -137,8 +137,6 @@ class Detector(torch.nn.Module):
                 peak_array.append(peak_tuple)
             detect_out.append(peak_array)
         return detect_out
-
-
 
 
 def save_model(model):
