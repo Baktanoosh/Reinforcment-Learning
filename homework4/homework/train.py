@@ -8,24 +8,6 @@ from . import dense_transforms
 import torch.utils.tensorboard as tb
 import torch.nn.functional as F
 
-
-
-class FocalLoss(torch.nn.Module):
-    def __init__(self, weight=None, size_average=True):
-        super(FocalLoss, self).__init__()
-
-    def forward(self, inputs, targets, alpha=0.8, gamma=0, smooth=1, iou_lambda=0.1):
-        #comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.sigmoid(inputs)       
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
-        BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
-        BCE_EXP = torch.exp(-BCE)
-        focal_loss = alpha * (1-BCE_EXP)**gamma * BCE
-        iou_loss = iou_lambda * (1 - torch.sum(inputs * targets) / torch.sum(inputs + targets - inputs * targets + smooth))
-        return focal_loss + iou_loss
-
-
 def train(args):
     from os import path
     train_logger, valid_logger = None, None
@@ -38,9 +20,8 @@ def train(args):
     Hint: Use the log function below to debug and visualize your model
     """
     global_step = 0
-    num_epoch = 20
-    FL = FocalLoss()
-    learning_rate = 1e-2
+    num_epoch = 50
+    learning_rate = 1e-3
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model = Detector().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
@@ -54,7 +35,7 @@ def train(args):
         for img, label,_ in train_data:
             img, label = img.to(device), label.to(device)
             logit = model(img)
-            loss_val = FL.forward(logit, label)
+            loss_val = loss(logit, label)
             loss_array.append(loss_val.cpu().detach().numpy())
             optimizer.zero_grad()
             loss_val.backward()
