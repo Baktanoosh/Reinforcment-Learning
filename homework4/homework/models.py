@@ -125,7 +125,7 @@ class Detector(torch.nn.Module):
         model = self.to('cuda')
         for heatmap in model(image[None].cuda()).squeeze(0):
             peak_array = []
-            peaks = extract_peak(heatmap, max_pool_ks=11, max_det=15)
+            peaks = extract_peak(heatmap, max_pool_ks=7, max_det=15)
             for p in peaks:
                 score, cx, cy = p
                 w, h = 0, 0
@@ -145,7 +145,6 @@ class Detector(torch.nn.Module):
             peak_array = peak_array[:30]
             detect_out.append(peak_array)
         return detect_out
-
 
 
 def save_model(model):
