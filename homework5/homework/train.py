@@ -24,7 +24,7 @@ def train(args):
     det_loss = torch.nn.SmoothL1Loss()
     transform = eval(args.transform, {k: v for k, v in inspect.getmembers(dense_transforms) if inspect.isclass(v)})
     train_data = load_data('drive_data', num_workers=4, transform=transform)
-    for epoch in range(args.num_epoch):
+    for epoch in range(num_epoch):
         loss_array =[]
         model.train()
         for img, gt_det, in train_data:
