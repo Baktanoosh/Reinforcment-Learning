@@ -23,12 +23,12 @@ def control(aim_point, current_vel):
     action.brake = False
     action.drift = False
     
-    if (current_vel < 25):
-        action.acceleration = 0.5
+    if (current_vel < 30):
+        action.acceleration = 1
     
-    if (direction > .22):
+    if (direction > .15):
       action.steer = 1
-    elif (direction < -.22):
+    elif (direction < -.15):
       action.steer = -1
     
     if (direction > .75 or direction < -.75):
