@@ -10,7 +10,6 @@ import inspect
  
 def train(args):
     from os import path
-    model = Planner().to(device)
     train_logger, valid_logger = None, None
     if args.log_dir is not None:
         train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'))
@@ -19,16 +18,17 @@ def train(args):
     num_epoch = 50
     learning_rate = 1e-3
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model = Planner().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
     det_loss = torch.nn.SmoothL1Loss()
     transform = eval(args.transform, {k: v for k, v in inspect.getmembers(dense_transforms) if inspect.isclass(v)})
     train_data = load_data('drive_data', num_workers=4, transform=transform)
-    for epoch in range(num_epoch):
-        loss_array =[]
+    for epoch in range(args.num_epoch):
         model.train()
-        for img, label,_ in train_data:
-            img, label = img.to(device), label.to(device)
+        for img, gt_det, in train_data:
+            img, gt_det= img.to(device), gt_det.to(device)
+            size_w, _ = gt_det.max(dim=1, keepdim=True)
             det= model(img)
             p_det = torch.sigmoid(det * (1-2*gt_det))
             det_loss_val = (det_loss(det, gt_det)*p_det).mean() / p_det.mean()
@@ -44,7 +44,6 @@ def train(args):
         print("Loss: " + "{0:.4f}".format(np.mean(loss_array)))
     save_model(model)
 
-    save_model(model)
 
 def log(logger, img, label, pred, global_step):
     """
