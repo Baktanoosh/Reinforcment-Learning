@@ -16,7 +16,7 @@ def train(args):
     num_epoch = 50
     learning_rate = 1e-3
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = Detector().to(device)
+    model = Planner()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
     det_loss = torch.nn.SmoothL1Loss()
