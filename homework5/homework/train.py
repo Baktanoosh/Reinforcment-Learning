@@ -4,10 +4,13 @@ import torch.utils.tensorboard as tb
 import numpy as np
 from .utils import load_data
 from . import dense_transforms
-
+import inspect
+ 
+ 
+ 
 def train(args):
     from os import path
-    model = Planner()
+    model = Planner().to(device)
     train_logger, valid_logger = None, None
     if args.log_dir is not None:
         train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'))
@@ -16,7 +19,6 @@ def train(args):
     num_epoch = 50
     learning_rate = 1e-3
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = Planner()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
     det_loss = torch.nn.SmoothL1Loss()
