@@ -32,14 +32,14 @@ def control(aim_point, current_vel):
         action.acceleration = 1
     
     if (direction > 0.15):
-      action.steer = 1
+      action.steer = 0.6
     elif (direction < -0.15):
-      action.steer = -1
+      action.steer = -0.6
       
     left_angle = min(direction, 1)
     right_angle = max(direction, -1)
     
-    if (left_angle*2 > 0.75 or right_angle*2 < -0.75):
+    if (left_angle*2 > 0.5 or right_angle*2 < -0.5):
         action.drift = True
       
     return action
