@@ -39,7 +39,7 @@ def control(aim_point, current_vel):
     left_angle = min(direction, 1)
     right_angle = max(direction, -1)
     
-    if (left_angle > 0.9 or right_angle < -0.9):
+    if (left_angle*2 > 0.75 or right_angle*2 < -0.75):
         action.drift = True
       
     return action
