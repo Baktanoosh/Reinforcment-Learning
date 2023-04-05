@@ -75,3 +75,4 @@ if __name__ == '__main__':
                         default='Compose([ColorJitter(0.9, 0.9, 0.9, 0.1), RandomHorizontalFlip(), ToTensor()])')
     args = parser.parse_args()
     train(args)
+ 
