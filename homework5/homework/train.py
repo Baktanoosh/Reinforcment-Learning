@@ -21,7 +21,8 @@ def train(args):
     model = Planner().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
-    det_loss = torch.nn.SmoothL1Loss()
+    #det_loss = torch.nn.SmoothL1Loss()
+    det_loss = torch.nn.MSELoss()
     transform = eval(args.transform, {k: v for k, v in inspect.getmembers(dense_transforms) if inspect.isclass(v)})
     train_data = load_data('drive_data', num_workers=4, transform=transform)
     for epoch in range(num_epoch):
@@ -75,4 +76,3 @@ if __name__ == '__main__':
                         default='Compose([ColorJitter(0.9, 0.9, 0.9, 0.1), RandomHorizontalFlip(), ToTensor()])')
     args = parser.parse_args()
     train(args)
- 
