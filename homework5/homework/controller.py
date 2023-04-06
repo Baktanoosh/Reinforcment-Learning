@@ -32,10 +32,12 @@ def control(aim_point, current_vel):
         action.acceleration = 1
     
     if (direction > 0.15):
-      action.steer = 0.6
+        action.brake = True
+        action.steer = 1
     elif (direction < -0.15):
-      action.steer = -0.6
-      
+        action.brake = True
+        action.steer = -1
+    action.brake = False  
     left_angle = min(direction, 1)
     right_angle = max(direction, -1)
     
@@ -64,4 +66,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     test_controller(args)
 
-    
+   
