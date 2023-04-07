@@ -1,4 +1,5 @@
 import pystk
+import numpy as np
 
 def control(aim_point, current_vel):
     """
@@ -57,5 +58,3 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
     test_controller(args)
-
- 
