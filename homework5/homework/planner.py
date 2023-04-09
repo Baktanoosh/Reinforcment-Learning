@@ -74,8 +74,10 @@ class Planner(torch.nn.Module):
             # Add the skip connection
             if self.use_skip:
                 z = torch.cat([z, up_activation[i]], dim=1)
-       soft_argmax = spatial_argmax(self.classifier(z).squeeze(1))          
-       return soft_argmax
+        z = torch.mean(z, dim=(2, 3))        
+        z = torch.squeeze(z)
+        soft_argmax = spatial_argmax(self.classifier(z))          
+        return soft_argmax
     
     
 
