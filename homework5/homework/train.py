@@ -6,6 +6,8 @@ from .utils import load_data
 from . import dense_transforms
 import inspect
  
+ 
+ 
 def train(args):
     from os import path
     train_logger, valid_logger = None, None
@@ -25,8 +27,9 @@ def train(args):
     for epoch in range(num_epoch):
         loss_array =[]
         model.train()
-        for img, label,_ in train_data:
-            img, label = img.to(device), label.to(device)
+        for img, gt_det, in train_data:
+            img, gt_det= img.to(device), gt_det.to(device)
+            size_w, _ = gt_det.max(dim=1, keepdim=True)
             det= model(img)
             p_det = torch.sigmoid(det * (1-2*gt_det))
             det_loss_val = (det_loss(det, gt_det)*p_det).mean() / p_det.mean()
