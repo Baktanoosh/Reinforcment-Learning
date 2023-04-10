@@ -15,12 +15,12 @@ def train(args):
         train_logger = tb.SummaryWriter(path.join(args.log_dir, 'train'))
 
     global_step = 0
-    num_epoch = 50
+    num_epoch = 120
     learning_rate = 1e-3
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model = Planner().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     det_loss = torch.nn.SmoothL1Loss()
     transform = eval(args.transform, {k: v for k, v in inspect.getmembers(dense_transforms) if inspect.isclass(v)})
     train_data = load_data('drive_data', num_workers=4, transform=transform)
