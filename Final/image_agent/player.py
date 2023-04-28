@@ -35,11 +35,11 @@ class Team:
         self.step = 0
         print('-------------------Loading classifier model--------------------')
         self.classifier = CNNClassifier()
-        self.classifier.load_state_dict(torch.load(path.join(path.dirname(path.abspath(__file__)), 'cnn1.th')))
+        self.classifier.load_state_dict(torch.load(path.join(path.dirname(path.abspath(__file__)), 'cnn1.th'),map_location = self.device))
         self.classifier.eval()
         print('-------------------Loading planner model--------------------')
         self.planner = Planner()
-        self.planner.load_state_dict(torch.load(path.join(path.dirname(path.abspath(__file__)), 'planner.th')))
+        self.planner.load_state_dict(torch.load(path.join(path.dirname(path.abspath(__file__)), 'planner.th'),map_location = self.device))
         self.planner.eval()
         print('planner model loaded........................................')
 
